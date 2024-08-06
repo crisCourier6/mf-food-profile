@@ -37,7 +37,6 @@ const FoodLike: React.FC = () => {
             }
         })
         .then(res => {
-            console.log(res)
             if (res.data.rating==rating){
                 setLiked(!liked)
                 setLikedNumber(likedNumber+1)
@@ -72,7 +71,6 @@ const FoodLike: React.FC = () => {
             }
         })
         .then(res => {
-            console.log(res)
             if (res.data.rating==rating){
                 setDisliked(!disliked)
                 setDislikedNumber(dislikedNumber+1)
@@ -98,12 +96,9 @@ const FoodLike: React.FC = () => {
              }
         })
         .then((response)=>{
-            console.log(response.data)
             if(!response.data){
-                console.log("no hay")
             }
             else{
-                console.log("si hay")
                 if(response.data.rating=="likes"){
                     setLiked(true)
                 }
@@ -120,9 +115,7 @@ const FoodLike: React.FC = () => {
              }
         })
         .then((response)=>{
-            console.log(response.data)
             if(!response.data){
-                console.log("no hay")
             }
             else{
                 setLikedNumber(response.data.likes)

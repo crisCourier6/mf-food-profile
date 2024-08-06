@@ -7,6 +7,7 @@ export interface FoodExternal{
     allergens_tags?: string[],
     nova_group?: string,
     additives_tags?: string[],
+    additives?:string[],
     environment_impact_level?: string,
     nutriscore_grade?: string,
     nutriscore_2023_tags?:string,

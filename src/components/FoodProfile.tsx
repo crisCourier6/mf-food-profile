@@ -3,16 +3,20 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { FoodLocal } from '../interfaces/foodLocal';
 import { useNavigate, useParams } from "react-router-dom"
-import { Box, Button, IconButton, Paper, Card, CardMedia, CardContent, Grid, Typography } from '@mui/material';
+import { Box, Button, IconButton, Paper, Card, CardMedia, CardContent, Grid, Typography, Backdrop, Dialog, DialogContent, DialogContentText, DialogActions, DialogTitle } from '@mui/material';
 import { FoodExternal } from '../interfaces/foodExternal';
 import Carousel from 'react-material-ui-carousel';
 import NoPhoto from "../../public/no-photo.png"
 import "./Components.css"
 import { GridColDef, DataGrid } from '@mui/x-data-grid';
 import ImagesScores from '../images/ImagesScores';
+import ImagesAllergens from '../images/ImagesAllergens';
 import QuickLookLogo from "../../public/QuickLookLogo.png"
 import FoodLike from './FoodLike';
 import FoodComments from './FoodComments';
+import FoodAdditive from './FoodAdditive';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import LaunchRoundedIcon from '@mui/icons-material/LaunchRounded';
 
 type NutritionValues = {
     id: string,
@@ -55,7 +59,6 @@ const allergensEngSpa: {[key: string]: string} = {
 }
 
 function Allergens(allergens:string[], traces:string[]){
-    console.log(allergens)
     console.log(traces)
     if ((!allergens || allergens.length == 0 || allergens.includes("en:none")) && (!traces || traces.length == 0)){
         return (
@@ -82,6 +85,28 @@ function Allergens(allergens:string[], traces:string[]){
                 })}       
             </ul>
         
+        </Paper>
+    )
+}
+
+function Additives(additives:string[]){
+    if (!additives || additives.length == 0){
+        return (
+            <Paper elevation={0} sx={{p:2}}>
+                Ningún aditivo identificado
+            </Paper>
+        )
+    }
+    
+    return (
+        <Paper elevation={0} sx={{textIndent: 10}}>
+            <ul>
+                {additives.map(data => {
+                        return (
+                                <FoodAdditive name = {data.split(",")[0]} wikidata={data.split(",")[1]}/>
+                        )
+                })} 
+            </ul>
         </Paper>
     )
 }
@@ -184,14 +209,81 @@ function Scores(scores:string[]){
     </>
     )
 }
+
+function UserFoodPrefs(foodAllergens:string[], foodTraces: string[]){
+    const userFoodPrefs:string[] = window.localStorage["food-prefs"].split(",")
+    console.log(foodTraces)
+    if ((!foodAllergens || foodAllergens.length == 0 || foodAllergens.includes("en:none")) && (!foodTraces || foodTraces.length == 0)){
+        return (<></>)
+    }
+    return (<>
+            <Box sx={{
+                display:"flex",
+                flexDirection:"row",
+                flexWrap: "wrap",
+                justifyContent: "space-around",
+            }}>
+                {userFoodPrefs.map(allergen=>{
+                    
+                        if(foodAllergens && foodAllergens.includes(allergen)){
+                            return (
+                                <Box sx={{
+                                    display:"flex",
+                                    flexDirection:"column",
+                                    justifyContent: "center",
+                                    alignItems: "center",
+                                    width: "30%",
+                                    pb:1
+                                }}>
+                                    <Box
+                                        component="img"
+                                        alt={allergen}
+                                        sx={{width:"80%"}}
+                                        src={ImagesAllergens[allergen]}
+                                    />
+                                    <Typography textAlign="center" fontSize={12} fontWeight="bold">Contiene {allergensEngSpa[allergen].toLowerCase()}</Typography>
+                                </Box>
+                            )
+                        }
+                        else if(foodTraces && foodTraces.includes(allergen)){
+                            return (
+                                <Box sx={{
+                                    display:"flex",
+                                    flexDirection:"column",
+                                    justifyContent: "center",
+                                    alignItems: "center",
+                                    width: "30%",
+                                    pb:1
+                                }}>
+                                    <Box
+                                        component="img"
+                                        alt={allergen}
+                                        sx={{width: "80%"}}
+                                        src={ImagesAllergens[allergen]}
+                                    />
+                                    <Typography textAlign="center" fontSize={12} fontWeight="bold">Puede contener {allergensEngSpa[allergen].toLowerCase()}</Typography>
+                                </Box>
+                            )
+                        }
+                })}
+            </Box>
+    </>
+    )
+}
       
 const FoodProfile: React.FC = () => {
     const [foodExternalSingle, setFoodExternalSingle] = useState<FoodExternal>({id:"", allergens_tags:[]})
     const [foodFullName, setFoodFullName] = useState<string>("")
     const [imageArr, setImageArr] = useState([{img:"",alt:""}])
     const [nutritionRows, setNutritionRows] = useState<NutritionValues[]>()
+    const [showQuickLookInfo, setShowQuickLookInfo] = useState(false)
     const { id } = useParams()
     const navigate = useNavigate()
+
+    const handleQuickLookClose = () => {
+        setShowQuickLookInfo(!showQuickLookInfo)
+    }
+
     useEffect(()=>{
         const url = "http://192.168.100.6:8080/foodexternal/" + id
 
@@ -205,7 +297,7 @@ const FoodProfile: React.FC = () => {
             console.log(response.data)
             if(!response.data){
                 console.log("no hay")
-                return navigate("/food/" + id + "/edit")
+                // return navigate("/food/" + id + "/edit")
                 
             }
             else{
@@ -324,24 +416,33 @@ const FoodProfile: React.FC = () => {
                 }}
                 > 
                     <Paper elevation={0} square={true} sx={{
+                        display:"flex",
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
                         bgcolor: "primary.main",
                         color: "primary.contrastText",
-                        width:"100%"
+                        width:"100%",
                     }}>
                         <Box
                             component="img"
                             sx={{
                                 height: "40px",
+                                pl: 1
                             }}
                             alt="QuickLook"
                             src={QuickLookLogo}
                         />
+                        <IconButton onClick={function () {setShowQuickLookInfo(true)}}>
+                            <InfoOutlinedIcon sx={{color: "secondary.main", fontSize: 30}}></InfoOutlinedIcon>
+                        </IconButton>
                     </Paper>
                     
                     {Scores([   "eco_score_" + foodExternalSingle.ecoscore_grade, 
                                 "nutri_score_" + foodExternalSingle.nutriscore_grade,
                                 "nova_score_" + foodExternalSingle.nova_group as string
                             ])}
+                    {UserFoodPrefs(foodExternalSingle.allergens_tags as string[], foodExternalSingle.traces_tags as string[])}
                 </Box>
                 
                 <Box
@@ -391,6 +492,26 @@ const FoodProfile: React.FC = () => {
                         Alérgenos
                     </Paper>
                     {Allergens(foodExternalSingle.allergens_tags as string[], foodExternalSingle.traces_tags as string[])}
+                </Box>
+
+                <Box
+                sx={{
+                    border: "5px solid",
+                    borderColor: "primary.main",
+                    width:"90%",
+                }}
+                > 
+                    <Paper elevation={0} square={true} sx={{
+                        bgcolor: "primary.main",
+                        color: "primary.contrastText",
+                        py: "5px",
+                        justifyContent: "flex-start",
+                        display: "flex",
+                        textIndent: 10
+                    }}>
+                        Aditivos
+                    </Paper>
+                    {Additives(foodExternalSingle.additives as string[])}
                 </Box>
 
                 <Box
@@ -463,6 +584,109 @@ const FoodProfile: React.FC = () => {
                 > 
                     <FoodComments></FoodComments>
                 </Box>
+                <Backdrop open={showQuickLookInfo} onClick={handleQuickLookClose} sx={{width: "100%"}}>
+                    <Dialog open={showQuickLookInfo} onClose={handleQuickLookClose} scroll='paper' 
+                    sx={{width: "100%", 
+                        maxWidth: "500px", 
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                    }}>
+                        <DialogTitle>
+                            Scores
+                        </DialogTitle>
+                        <DialogContent sx={{ display:"flex", flexDirection: "column", justifyContent: "flex-start", alignItems: "center", gap:2}}>
+                            <DialogContentText>
+                                <Typography fontSize={15} fontWeight="bold">
+                                    Eco-Score
+                                </Typography>
+                            </DialogContentText>
+                            <DialogContentText fontSize={13} textAlign="justify">
+                                Eco-Score clasifica los productos alimenticios de A (bajo) a E (alto) según su impacto en el medio ambiente.
+                            </DialogContentText>
+                            <Button variant="contained"
+                                    component="a"
+                                    href="https://docs.score-environnemental.com/v/en"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    size="small"
+                                    sx={{textTransform: "none",
+                                        display: "inline-flex",
+                                        gap: 1
+
+                                    }}>
+                                    Más información 
+                                    <LaunchRoundedIcon sx={{fontSize: 20}}></LaunchRoundedIcon>
+                            </Button>
+                            <DialogContentText>
+                                <Typography fontSize={15} fontWeight="bold">
+                                    Nutri-Score
+                                </Typography>
+                            </DialogContentText>
+                            <DialogContentText fontSize={13} textAlign="justify">
+                            Nutriscore actúa como un semáforo nutricional: es un sistema de clasificación de 5 letras y colores, en el que 
+                            la A de color verde oscuro es la opción más saludable y la E roja la peor, pasando por la B, C y D.
+                            </DialogContentText>
+                            <Button variant="contained"
+                                    component="a"
+                                    href="https://www.ocu.org/alimentacion/comer-bien/informe/nutriscore"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    size="small"
+                                    sx={{textTransform: "none",
+                                        display: "inline-flex",
+                                        gap: 1
+
+                                    }}>
+                                    Más información 
+                                    <LaunchRoundedIcon sx={{fontSize: 20}}></LaunchRoundedIcon>
+                            </Button>
+                            <DialogContentText>
+                                <Typography fontSize={15} fontWeight="bold">
+                                    Nova-Score
+                                </Typography>
+                            </DialogContentText>
+                            <DialogContentText fontSize={13} textAlign="justify">
+                                Nova-Score es un marco para agrupar sustancias comestibles en función del grado y el propósito del 
+                                procesamiento de alimentos que se les aplica. Nova clasifica los alimentos en cuatro grupos:
+                                <ol>
+                                    <li>Alimentos no procesados ​o mínimamente procesados</li> 
+                                    <li>Ingredientes culinarios procesados</li>
+                                    <li>Alimentos procesados</li>
+                                    <li>Alimentos ultraprocesados</li>
+                                </ol>
+
+                            </DialogContentText>
+                            <Button variant="contained"
+                                    component="a"
+                                    href="https://en.wikipedia.org/wiki/Nova_classification"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    size="small"
+                                    sx={{textTransform: "none",
+                                        display: "inline-flex",
+                                        gap: 1
+
+                                    }}>
+                                    Más información 
+                                    <LaunchRoundedIcon sx={{fontSize: 20}}></LaunchRoundedIcon>
+                            </Button>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button sx={{
+                                color: "primary.contrastText", 
+                                bgcolor: "primary.main", 
+                                "&:hover": {
+                                    color: "secondary.contrastText", 
+                                    bgcolor: "secondary.main", 
+                                }
+                            }} 
+                            onClick={handleQuickLookClose}>
+                                OK
+                            </Button>
+                        </DialogActions>
+                    </Dialog>
+                </Backdrop>
     
                 {/* <Button variant='contained'
                     sx={{
@@ -484,6 +708,7 @@ const FoodProfile: React.FC = () => {
                 </Button> */}
                 
             </Grid> :null}
+            
         </>
     )
 };
