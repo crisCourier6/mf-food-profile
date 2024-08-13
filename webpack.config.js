@@ -61,7 +61,8 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
             filename: "remoteEntry.js",
             exposes: {
               "./FoodProfile": "./src/components/FoodProfile", // Ejemplo, aqui se exponen los componentes
-              "./FoodListLocal": "./src/components/FoodListLocal"
+              "./FoodListLocal": "./src/components/FoodListLocal",
+              "./FoodListMini": "./src/components/FoodListMini"
             },
             shared: {
               ...dependencies,

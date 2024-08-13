@@ -10,19 +10,43 @@ import ThumbDownRoundedIcon from '@mui/icons-material/ThumbDownRounded';
 import CircularProgress from '@mui/material/CircularProgress';
 
 interface FoodLikeProps {
-    foodId: string;
-    onRatingChange?: (foodId: string, rating: string) => void; // Callback prop to notify the parent
+    foodId: string
+    likes:number
+    dislikes:number
+    rating: string
+    onRatingChange?: (foodId: string, rating: string, likedNumber:number, dislikedNumber:number) => void; // Callback prop to notify the parent
   }
 
-const FoodLike: React.FC<FoodLikeProps> = (props) => {
+const FoodLikeNoGet: React.FC<FoodLikeProps> = (props) => {
     const navigate = useNavigate()
     const [liked, setLiked] = useState(false)
     const [disliked, setDisliked] = useState(false)
+    const [neutral, setNeutral] = useState(false)
     const [likedNumber, setLikedNumber] = useState(0)
     const [dislikedNumber, setDislikedNumber] = useState(0)
     const [isFetching, setIsFetching] = useState(false)
     const [error, setError] = useState(null)
     const url = "http://192.168.100.6:8080/food/ratings/"
+
+    useEffect(()=>{
+        setDislikedNumber(props.dislikes)
+        setLikedNumber(props.likes)
+        if (props.rating==="likes"){
+            setLiked(true)
+            setDisliked(false)
+            setNeutral(false)
+        }
+        else if(props.rating==="dislikes"){
+            setDisliked(true)
+            setLiked(false)
+            setNeutral(false)
+        }
+        else if(props.rating==="neutral"){
+            setNeutral(true)
+            setDisliked(false)
+            setLiked(false)
+        }
+    },[props])
 
     const handleLike = () => {
         setError(null)
@@ -44,21 +68,25 @@ const FoodLike: React.FC<FoodLikeProps> = (props) => {
         })
         .then(res => {
             if (res.data.rating==rating){
+                let newLikedNumber = likedNumber + plus;
+                let newDislikedNumber = disliked ? dislikedNumber - 1 : dislikedNumber;
                 setLiked(!liked)
                 setLikedNumber(likedNumber+plus)
                 if (disliked){
                     setDisliked(false)
                     setDislikedNumber(dislikedNumber-1)
                 }
+                props.onRatingChange?.(props.foodId, rating, newLikedNumber, newDislikedNumber)
             }
+            
             else if(res.data.affected){
+                let newLikedNumber = likedNumber - 1;
                 setLiked(!liked)
                 setLikedNumber(likedNumber-1)
+                props.onRatingChange?.(props.foodId, rating, newLikedNumber, dislikedNumber)
             }
             setIsFetching(false)
-            props.onRatingChange?.(props.foodId, rating)
         })
-
     }
 
     const handleDislike = () => {
@@ -81,75 +109,34 @@ const FoodLike: React.FC<FoodLikeProps> = (props) => {
         })
         .then(res => {
             if (res.data.rating==rating){
+                let newDislikedNumber = dislikedNumber + plus;
+                let newLikedNumber = liked ? likedNumber - 1 : likedNumber;
+                
                 setDisliked(!disliked)
                 setDislikedNumber(dislikedNumber+plus)
                 if (liked){
                     setLiked(false)
                     setLikedNumber(likedNumber-1)
                 }
+                props.onRatingChange?.(props.foodId, rating, newLikedNumber, newDislikedNumber)
             }
             else if(res.data.affected){
+                let newDislikedNumber = dislikedNumber - 1;
                 setDisliked(!disliked)
                 setDislikedNumber(dislikedNumber-1)
+                props.onRatingChange?.(props.foodId, rating, likedNumber, newDislikedNumber)
+            }
+            else {
+                setDisliked(false)
+                setLiked(false)
             }
             setIsFetching(false)
-            props.onRatingChange?.(props.foodId, rating)
+            
         })
 
     }
 
-    useEffect(()=>{
-        axios.get(url + "byuserandfood/" + props.foodId + "/" + window.localStorage.id, {
-            withCredentials: true,
-             headers: {
-                 Authorization: "Bearer " + window.localStorage.token
-             }
-        })
-        .then((response)=>{
-            console.log(response.data)
-            if(!response.data.rating){
-                console.log("no estaba en el historial")
-                axios.post(url, {
-                    userId: window.localStorage.id,
-                    foodLocalId: props.foodId,
-                    rating: "neutral"
-                }, {withCredentials: true, 
-                    headers: {
-                        Authorization: "Bearer " + window.localStorage.token
-                    }
-                })
-                .then(res2 => {
-                    if (!res2.data.rating){
-                        console.log("error al registrar alimento en historial")
-                    }
-                })
-            }
-            else{
-                if(response.data.rating=="likes"){
-                    setLiked(true)
-                }
-                else if(response.data.rating=="dislikes"){
-                    setDisliked(true)
-                }
-            }
-            
-        })
-        axios.get(url + "byfood/" + props.foodId, {
-            withCredentials: true,
-             headers: {
-                 Authorization: "Bearer " + window.localStorage.token
-             }
-        })
-        .then((response)=>{
-            if(!response.data){
-            }
-            else{
-                setLikedNumber(response.data.likes)
-                setDislikedNumber(response.data.dislikes)
-            }
-            
-        })
-    },[props.foodId])
+    
 
     return ( 
         <Box sx={{
@@ -165,12 +152,12 @@ const FoodLike: React.FC<FoodLikeProps> = (props) => {
                 sx={{
                     color: liked?"secondary.main":"#c9c9c9"
                 }}>
-                    {isFetching? <CircularProgress size="20px" color='warning'/>:<ThumbUpRoundedIcon fontSize="medium"/>}
+                    <ThumbUpRoundedIcon fontSize="medium"/>
                 </IconButton>
                 <Typography sx={{
                     color: liked?"secondary.main":"#c9c9c9"
                 }}>
-                    {likedNumber}
+                    {isFetching? <CircularProgress size="20px" color='warning'/>:likedNumber}
                 </Typography>
             </Box>
             <Box sx={{
@@ -182,17 +169,17 @@ const FoodLike: React.FC<FoodLikeProps> = (props) => {
                 sx={{
                     color: disliked?"warning.main":"#c9c9c9"
                 }}>
-                    {isFetching? <CircularProgress size="20px" color='warning'/>:<ThumbDownRoundedIcon fontSize="medium"/>}
+                    <ThumbDownRoundedIcon fontSize="medium"/>
                 </IconButton>
                 <Typography 
                 sx={{
                     color: disliked?"warning.main":"#c9c9c9"
                 }}>
-                    {dislikedNumber}
+                    {isFetching? <CircularProgress size="20px" color='warning'/>:dislikedNumber}
                 </Typography>
             </Box>
         </Box>
     )
 };
 
-export default FoodLike;
+export default FoodLikeNoGet;

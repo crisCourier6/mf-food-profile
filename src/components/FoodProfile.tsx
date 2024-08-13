@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { FoodLocal } from '../interfaces/foodLocal';
-import { useNavigate, useParams } from "react-router-dom"
+import { useLocation, useNavigate, useParams } from "react-router-dom"
 import { Box, Button, IconButton, Paper, Card, CardMedia, CardContent, Grid, Typography, Backdrop, Dialog, DialogContent, DialogContentText, DialogActions, DialogTitle } from '@mui/material';
 import { FoodExternal } from '../interfaces/foodExternal';
 import Carousel from 'react-material-ui-carousel';
@@ -24,20 +24,59 @@ type NutritionValues = {
     serving: any
 }
 
-function Item(props:any)
-{
+const Item = (props:any) =>{   
+    const [showImage, setShowImage] = useState(false)
+    function handleImageClose(){
+        setShowImage(false)
+    }
+    function handleImageOpen(){
+        setShowImage(true)
+    }
     return (
+        <>
         <Card sx={{border: "5px solid", borderColor: "primary.main", height:250}}>
-            <CardMedia sx={{height: 200, borderBottom: "5px solid", borderColor: "primary.main"}}
+            <CardMedia sx={{height: 200, borderBottom: "5px solid", borderColor: "primary.main", cursor :"pointer"}}
                 image={props.item.img}
-                title={props.item.alt}>      
+                title={props.item.alt}
+                onClick={handleImageOpen}>      
             </CardMedia>
             <CardContent>
-                <Typography variant="body2" color="primary.dark">
+                <Typography variant="subtitle1" color="primary.dark">
                     {props.item.alt}
                 </Typography>
             </CardContent>
         </Card>
+        <Backdrop open={showImage} onClick={handleImageClose} 
+        sx={{width: "100vw"}}
+        >
+            <Dialog open={showImage} onClose={handleImageClose} scroll='paper' 
+                        sx={{width: "100%", 
+                            maxWidth: "500px", 
+                            margin: "auto"
+                        }}>
+                        <DialogContent>
+                            <img
+                                src={props.item.img}
+                                alt={props.item.alt}
+                                style={{ width: '100%', height: 'auto' }}
+                            />
+                        </DialogContent>
+                        <DialogActions>
+                            <Button sx={{
+                                color: "primary.contrastText", 
+                                bgcolor: "primary.main", 
+                                "&:hover": {
+                                    color: "secondary.contrastText", 
+                                    bgcolor: "secondary.main", 
+                                }
+                            }} 
+                            onClick={handleImageClose}>
+                                Cerrar
+                            </Button>
+                        </DialogActions>
+            </Dialog>
+        </Backdrop>
+        </>
     )
 }
 
@@ -63,24 +102,30 @@ function Allergens(allergens:string[], traces:string[]){
     if ((!allergens || allergens.length == 0 || allergens.includes("en:none")) && (!traces || traces.length == 0)){
         return (
             <Paper elevation={0} sx={{p:2}}>
+                <Typography variant='subtitle1' color= "primary.dark">
                 Ningún alérgeno identificado
+                </Typography>
             </Paper>
         )
     }
     
     return (
-        <Paper elevation={0} sx={{textIndent: 10}}>
-            <ul>
+        <Paper elevation={0}>
+            <ul style={{ paddingLeft: 10 }}>
                 {allergens.map(eng => {
                     return (
-                        <li> {allergensEngSpa[eng]}</li>
+                        <Typography variant='subtitle1' color= "primary.dark">
+                            <li> {allergensEngSpa[eng]}</li>
+                        </Typography>
                     )
                 })}       
             </ul>
-            <ul>
+            <ul style={{ paddingLeft: 10 }}>
                 {traces.map(eng => {
                     return (
-                        <li> Puede contener {allergensEngSpa[eng]}</li>
+                        <Typography variant='subtitle1' color= "primary.dark">
+                            <li> Puede contener {allergensEngSpa[eng].toLowerCase()}</li>
+                        </Typography>
                     )
                 })}       
             </ul>
@@ -93,21 +138,15 @@ function Additives(additives:string[]){
     if (!additives || additives.length == 0){
         return (
             <Paper elevation={0} sx={{p:2}}>
-                Ningún aditivo identificado
+                <Typography variant='subtitle1' color= "primary.dark">
+                    Ningún aditivo identificado
+                </Typography>
             </Paper>
         )
     }
     
     return (
-        <Paper elevation={0} sx={{textIndent: 10}}>
-            <ul>
-                {additives.map(data => {
-                        return (
-                                <FoodAdditive name = {data.split(",")[0]} wikidata={data.split(",")[1]}/>
-                        )
-                })} 
-            </ul>
-        </Paper>
+            <FoodAdditive additives={additives}/>
     )
 }
 
@@ -233,7 +272,8 @@ function UserFoodPrefs(foodAllergens:string[], foodTraces: string[]){
                                     justifyContent: "center",
                                     alignItems: "center",
                                     width: "30%",
-                                    pb:1
+                                    pb:1,
+                                    gap:1
                                 }}>
                                     <Box
                                         component="img"
@@ -241,7 +281,9 @@ function UserFoodPrefs(foodAllergens:string[], foodTraces: string[]){
                                         sx={{width:"80%"}}
                                         src={ImagesAllergens[allergen]}
                                     />
-                                    <Typography textAlign="center" fontSize={12} fontWeight="bold">Contiene {allergensEngSpa[allergen].toLowerCase()}</Typography>
+                                    <Typography textAlign="center" variant='subtitle1' fontWeight="bold" color="error">
+                                        Contiene {allergensEngSpa[allergen].toLowerCase()}
+                                    </Typography>
                                 </Box>
                             )
                         }
@@ -261,7 +303,9 @@ function UserFoodPrefs(foodAllergens:string[], foodTraces: string[]){
                                         sx={{width: "80%"}}
                                         src={ImagesAllergens[allergen]}
                                     />
-                                    <Typography textAlign="center" fontSize={12} fontWeight="bold">Puede contener {allergensEngSpa[allergen].toLowerCase()}</Typography>
+                                   <Typography textAlign="center" variant='subtitle1' fontWeight="bold" color="warning.main">
+                                        Puede contener {allergensEngSpa[allergen].toLowerCase()}
+                                    </Typography>
                                 </Box>
                             )
                         }
@@ -271,12 +315,17 @@ function UserFoodPrefs(foodAllergens:string[], foodTraces: string[]){
     )
 }
       
-const FoodProfile: React.FC = () => {
+const FoodProfile: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible }) => {
     const [foodExternalSingle, setFoodExternalSingle] = useState<FoodExternal>({id:"", allergens_tags:[]})
     const [foodFullName, setFoodFullName] = useState<string>("")
     const [imageArr, setImageArr] = useState([{img:"",alt:""}])
     const [nutritionRows, setNutritionRows] = useState<NutritionValues[]>()
     const [showQuickLookInfo, setShowQuickLookInfo] = useState(false)
+    const [animation, setAnimation] = useState<string>("none")
+    const [transform, setTransform] = useState<string>("translatex(0px)")
+    const textRef = useRef<HTMLSpanElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+
     const { id } = useParams()
     const navigate = useNavigate()
 
@@ -284,9 +333,41 @@ const FoodProfile: React.FC = () => {
         setShowQuickLookInfo(!showQuickLookInfo)
     }
 
-    useEffect(()=>{
-        const url = "http://192.168.100.6:8080/foodexternal/" + id
+    useEffect(() => {
+        let fullTextWidth = 0
+        let fullContainerWidth = 0
+        if (textRef.current) {
+            fullTextWidth = textRef.current.scrollWidth;
+            
+        }
+        if (containerRef.current) {
+            fullContainerWidth = containerRef.current.clientWidth;
+            
+        }
+        if (fullTextWidth  !== 0 && fullContainerWidth !== 0){
+            
+            if (fullTextWidth > fullContainerWidth){
+                setAnimation(`scroll-text ${Math.round((fullTextWidth / fullContainerWidth) * 7)}s linear infinite`)
+                setTransform(`translateX(-${fullTextWidth - fullContainerWidth + 10 }px)`)
+            }
+        }
+       
+    }, [foodFullName, textRef.current, containerRef.current]);
 
+    useEffect(()=>{
+        console.log(animation)
+        console.log(transform)
+    },[animation,transform])
+
+    useEffect(()=>{
+        // if (!window.localStorage.reloaded){
+        //     window.localStorage.setItem("reloaded", "yes")
+        //     window.location.reload()
+        // }
+        // else {
+        //     window.localStorage.removeItem("reloaded")
+        // }
+        const url = "http://192.168.100.6:8080/food/external/" + id
         axios.get(url, {
             withCredentials: true,
              headers: {
@@ -297,7 +378,7 @@ const FoodProfile: React.FC = () => {
             console.log(response.data)
             if(!response.data){
                 console.log("no hay")
-                // return navigate("/food/" + id + "/edit")
+                return navigate("/food/" + id + "/edit")
                 
             }
             else{
@@ -392,9 +473,76 @@ const FoodProfile: React.FC = () => {
 
     return ( 
         <>
-            {foodExternalSingle ? 
-            <Grid container display="flex" flexDirection="column" justifyContent="center" alignItems="center" sx={{width: "100vw", maxWidth:"500px", gap:"10px"}}>
-                <h2>{foodFullName}</h2>
+    
+            <Grid container 
+                display="flex" 
+                flexDirection="column" 
+                justifyContent="center" 
+                alignItems="center" 
+                sx={{width: "100vw", maxWidth:"500px", gap:"10px"}}
+            >   
+                {foodFullName!== "" &&
+                <Box 
+                ref={containerRef}
+                sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    position: 'sticky',
+                    top: isAppBarVisible?"50px":"0px",
+                    width:"100%",
+                    transition: "top 0.3s",
+                    backgroundColor: 'primary.dark', // Ensure visibility over content
+                    zIndex: 100,
+                    boxShadow: 3,
+                    overflow: "hidden", 
+                    borderBottom: "5px solid",
+                    borderLeft: "5px solid",
+                    borderRight: "5px solid",
+                    borderColor: "secondary.main",
+                    boxSizing: "border-box"
+                  }}
+                >
+                    <Box
+                    sx={{
+                        width: "100%", 
+                        overflow: "hidden", // Hide overflowed content
+                        whiteSpace: "nowrap", // Prevent text wrapping
+                        position: "relative", // For positioning animation
+                    }}
+                    >
+                        <Typography variant='h5' 
+                        ref={textRef}
+                        width="100%" 
+                        sx={{pt:1, 
+                            color: "primary.contrastText",
+                            display:"inline-block", 
+                            whiteSpace: "nowrap", 
+                            animation: animation,
+                                '@keyframes scroll-text': {
+                                    "0%": {
+                                        transform: `translateX(10px)`,
+                                    },
+                                    "25%": {
+                                        transform: `translateX(10px)`, 
+                                    },
+                                    "50%": {
+                                        transform: transform,
+                                    },
+                                    "75%": {
+                                        transform: transform, 
+                                    },
+                                    "100%": {
+                                        transform: `translateX(10px)`, 
+                                    },
+                                },   
+                        }}>
+                            {foodFullName}
+                        </Typography>
+                    </Box>
+                    <FoodLike foodId={foodExternalSingle.id}></FoodLike>
+                </Box>}
                 <Box sx={{
                         width:"95%",
                 }}> 
@@ -404,7 +552,7 @@ const FoodProfile: React.FC = () => {
                         }
                     </Carousel>
                 </Box>
-                <FoodLike></FoodLike>
+                
                 <Box
                 sx={{
                     border: "5px solid",
@@ -455,20 +603,29 @@ const FoodProfile: React.FC = () => {
                     <Paper elevation={0} square={true} sx={{
                         bgcolor: "primary.main",
                         color: "primary.contrastText",
-                        py: "5px",
                         justifyContent: "flex-start",
                         display: "flex",
-                        textIndent: 10
+                        textIndent: 10,
+                        pb:"5px"
                     }}>
+                        <Typography variant='h6' color= "primary.contrastText">
                         Información general
+                        </Typography>
                     </Paper>
-                    <Paper elevation={0} sx={{textIndent: 10 }}>
-                    <ul>
-                        <li>Nombre: {foodExternalSingle.product_name}</li>
-                        <li>Cantidad: {foodExternalSingle.quantity?foodExternalSingle.quantity:"Desconocida"}</li>
-                        <li>Marca: {foodExternalSingle.brands?foodExternalSingle.brands:"Desconocida"}</li>
-                        <li>Código: {foodExternalSingle.id?foodExternalSingle.id:"Desconocido"}</li>
-                        
+                    <Paper elevation={0}>
+                    <ul style={{ paddingLeft: 10 }}>
+                        <Typography variant='subtitle1' color= "primary.dark">
+                            <li><span style={{fontWeight: "bold"}}>Nombre: </span>{foodExternalSingle.product_name}</li>
+                        </Typography>
+                        <Typography variant='subtitle1' color= "primary.dark">
+                            <li><span style={{fontWeight: "bold"}}>Cantidad: </span>{foodExternalSingle.quantity?foodExternalSingle.quantity:"Desconocida"}</li>
+                        </Typography>  
+                        <Typography variant='subtitle1' color= "primary.dark">
+                            <li><span style={{fontWeight: "bold"}}>Marca: </span>{foodExternalSingle.brands?foodExternalSingle.brands:"Desconocida"}</li>
+                        </Typography>
+                        <Typography variant='subtitle1' color= "primary.dark">
+                            <li><span style={{fontWeight: "bold"}}>Código: </span>{foodExternalSingle.id?foodExternalSingle.id:"Desconocido"}</li>
+                        </Typography>
                     </ul>
                     </Paper>
                     
@@ -484,12 +641,14 @@ const FoodProfile: React.FC = () => {
                     <Paper elevation={0} square={true} sx={{
                         bgcolor: "primary.main",
                         color: "primary.contrastText",
-                        py: "5px",
+                        pb:"5px",
                         justifyContent: "flex-start",
                         display: "flex",
                         textIndent: 10
                     }}>
+                        <Typography variant='h6' color= "primary.contrastText">
                         Alérgenos
+                        </Typography>
                     </Paper>
                     {Allergens(foodExternalSingle.allergens_tags as string[], foodExternalSingle.traces_tags as string[])}
                 </Box>
@@ -504,12 +663,14 @@ const FoodProfile: React.FC = () => {
                     <Paper elevation={0} square={true} sx={{
                         bgcolor: "primary.main",
                         color: "primary.contrastText",
-                        py: "5px",
+                        pb:"5px",
                         justifyContent: "flex-start",
                         display: "flex",
                         textIndent: 10
                     }}>
+                        <Typography variant='h6' color= "primary.contrastText">
                         Aditivos
+                        </Typography>
                     </Paper>
                     {Additives(foodExternalSingle.additives as string[])}
                 </Box>
@@ -527,13 +688,15 @@ const FoodProfile: React.FC = () => {
                     <Paper elevation={0} square={true} sx={{
                         bgcolor: "primary.main",
                         color: "primary.contrastText",
-                        py: "5px",
+                        pb:"5px",
                         width: "100%",
                         justifyContent: "flex-start",
                         display: "flex",
                         textIndent: 10
                     }}>
+                         <Typography variant='h6' color= "primary.contrastText">
                         Ingredientes
+                        </Typography>
                     </Paper>
                     <Box sx={{
                             width:"95%",
@@ -556,12 +719,14 @@ const FoodProfile: React.FC = () => {
                     <Paper elevation={0} square={true} sx={{
                         bgcolor: "primary.main",
                         color: "primary.contrastText",
-                        py: "5px",
+                        pb:"5px",
                         justifyContent: "flex-start",
                         display: "flex",
                         textIndent: 10
                     }}>
+                        <Typography variant='h6' color= "primary.contrastText">
                         Información nutricional
+                        </Typography>
                     </Paper>
                     <Box sx={{
                         display:"flex",
@@ -588,12 +753,10 @@ const FoodProfile: React.FC = () => {
                     <Dialog open={showQuickLookInfo} onClose={handleQuickLookClose} scroll='paper' 
                     sx={{width: "100%", 
                         maxWidth: "500px", 
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
+                        margin: "auto"
                     }}>
-                        <DialogTitle>
-                            Scores
+                        <DialogTitle textAlign="left">
+                            QuickLook
                         </DialogTitle>
                         <DialogContent sx={{ display:"flex", flexDirection: "column", justifyContent: "flex-start", alignItems: "center", gap:2}}>
                             <DialogContentText>
@@ -601,7 +764,7 @@ const FoodProfile: React.FC = () => {
                                     Eco-Score
                                 </Typography>
                             </DialogContentText>
-                            <DialogContentText fontSize={13} textAlign="justify">
+                            <DialogContentText fontSize={13} textAlign="justify" fontFamily="Montserrat">
                                 Eco-Score clasifica los productos alimenticios de A (bajo) a E (alto) según su impacto en el medio ambiente.
                             </DialogContentText>
                             <Button variant="contained"
@@ -623,7 +786,7 @@ const FoodProfile: React.FC = () => {
                                     Nutri-Score
                                 </Typography>
                             </DialogContentText>
-                            <DialogContentText fontSize={13} textAlign="justify">
+                            <DialogContentText fontSize={13} textAlign="justify" fontFamily="Montserrat">
                             Nutriscore actúa como un semáforo nutricional: es un sistema de clasificación de 5 letras y colores, en el que 
                             la A de color verde oscuro es la opción más saludable y la E roja la peor, pasando por la B, C y D.
                             </DialogContentText>
@@ -646,7 +809,7 @@ const FoodProfile: React.FC = () => {
                                     Nova-Score
                                 </Typography>
                             </DialogContentText>
-                            <DialogContentText fontSize={13} textAlign="justify">
+                            <DialogContentText fontSize={13} textAlign="justify" fontFamily="Montserrat">
                                 Nova-Score es un marco para agrupar sustancias comestibles en función del grado y el propósito del 
                                 procesamiento de alimentos que se les aplica. Nova clasifica los alimentos en cuatro grupos:
                                 <ol>
@@ -707,7 +870,7 @@ const FoodProfile: React.FC = () => {
                     }}>COMENTARIOS
                 </Button> */}
                 
-            </Grid> :null}
+            </Grid> :null
             
         </>
     )
