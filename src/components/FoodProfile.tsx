@@ -17,6 +17,7 @@ import FoodComments from './FoodComments';
 import FoodAdditive from './FoodAdditive';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import LaunchRoundedIcon from '@mui/icons-material/LaunchRounded';
+import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
 
 type NutritionValues = {
     id: string,
@@ -94,7 +95,19 @@ const allergensEngSpa: {[key: string]: string} = {
     "en:fish": "Pescado",
     "en:crustaceans": "Crustáceos",
     "en:molluscs": "Moluscos",
-    "en:sulphur-dioxide-and-sulphites": "Anhídrico sulfuroso"
+    "en:sulphur-dioxide-and-sulphites": "Anhídrico sulfuroso",
+    "en:matsutake": "Matsutake",
+    "en:yamaimo" : "Yamaimo",
+    "en:kiwi" : "Kiwi",
+    "en:peach" : "Durazno",
+    "en:gelatin" : "Gelatina",
+    "en:pork" : "Cerdo",
+    "en:banana" : "Plátano",
+    "en:beef" : "Carne de res",
+    "en:red-caviar" : "Caviar rojo",
+    "en:orange" : "Naranja",
+    "en:chicken" : "Pollo", 
+    "en:apple" : "Manzana"
 }
 
 function Allergens(allergens:string[], traces:string[]){
@@ -540,8 +553,36 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible }
                         }}>
                             {foodFullName}
                         </Typography>
+                    </Box>   
+                    <Box 
+                    sx={{
+                        display: "flex", 
+                        flexDirection: "row", 
+                        width: "95%", 
+                        justifyContent: "space-between",
+                        alignItems: "center"}}>
+                        <FoodLike foodId={foodExternalSingle.id}></FoodLike>
+                        <Button variant='text' onClick={()=>navigate("edit")} 
+                        sx={{
+                            padding:0.2, 
+                            color: "warning.main", 
+                            display: "flex",
+                            flexDirection: "row",
+                            justifyContent: "space-between",
+                            height: "100%"
+                        }}>
+                            <EditNoteRoundedIcon sx={{color: 'warning.main', height: "32px", width: "32px" }}/>
+                            <Typography 
+                            variant='subtitle1' 
+                            color="warning.main" 
+                            fontSize={14}
+                            textAlign={"justify"}
+                            sx={{textDecoration: "underline"}}>
+                                Agregar/Editar
+                            </Typography>
+                        </Button>
                     </Box>
-                    <FoodLike foodId={foodExternalSingle.id}></FoodLike>
+                    
                 </Box>}
                 <Box sx={{
                         width:"95%",
@@ -870,7 +911,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible }
                     }}>COMENTARIOS
                 </Button> */}
                 
-            </Grid> :null
+            </Grid>
             
         </>
     )

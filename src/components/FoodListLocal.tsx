@@ -5,6 +5,7 @@ import { FoodLocal } from '../interfaces/foodLocal';
 import { Box } from '@mui/material';
 import { DataGrid, GridColDef, GridEventListener } from "@mui/x-data-grid"
 import { useNavigate } from 'react-router-dom';
+import { esES } from '@mui/x-data-grid/locales';
 
 const componentBreaks = {
     breakpoints: {
@@ -71,26 +72,34 @@ const FoodListLocal: React.FC = () => {
                 }}
                 pageSizeOptions={[5, 10]}
                 onRowClick={handleRowClick}
-                sx={{
-                    cursor:"pointer", 
-                    width: "100%", 
-                    minWidth: 0,
-                    '& .MuiDataGrid-row:nth-of-type(odd)': {
-                        backgroundColor: 'secondary.light', // Light grey for odd rows
-                        fontFamily: "Montserrat"
-                    },
-                    '& .MuiDataGrid-row:nth-of-type(even)': {
-                        backgroundColor: '#ffffff', // White for even rows
-                        fontFamily: "Montserrat"
-                    },
-                    '& .header-colors': {
-                        backgroundColor: "primary.main",
-                        color: "primary.contrastText",
-                        fontWeight: "bold",
-                        fontFamily: "Righteous"
-                    },
-                    
-                }}
+                localeText={esES.components.MuiDataGrid.defaultProps.localeText} // Apply locale directly
+                    sx={{
+                        
+                        width: "100%", 
+                        minWidth: 0,
+                        '& .MuiDataGrid-row:nth-of-type(odd)': {
+                            backgroundColor: 'secondary.light', // Light grey for odd rows
+                            fontFamily: "Montserrat"
+                        },
+                        '& .MuiDataGrid-row:nth-of-type(even)': {
+                            backgroundColor: '#ffffff', // White for even rows
+                            fontFamily: "Montserrat"
+                        },
+                        '& .MuiDataGrid-sortIcon': {
+                            color: 'primary.contrastText', // Change sort icon color
+                        },
+                        '& .MuiDataGrid-menuIconButton': {
+                            color: 'primary.contrastText', // Change column menu icon color
+                        },
+                        '& .header-colors': {
+                            backgroundColor: "primary.main",
+                            color: "primary.contrastText",
+                            fontWeight: "bold",
+                            fontFamily: "Righteous",
+                            whiteSpace: "normal"
+                        },
+                        
+                    }}
                 />
                 :null}
         </Box>
