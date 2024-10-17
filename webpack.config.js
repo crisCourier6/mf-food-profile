@@ -7,8 +7,12 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
         mode: "development",
         devServer: {
           port: 4003, // Modificar
-          host: "192.168.100.6",
+          host: "localhost",
+          allowedHosts: 'all',
           historyApiFallback: true, // Necesario para que funcione React Router
+          client: {
+            overlay: false
+          }
         },
         module: {
           rules: [
@@ -62,7 +66,8 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
             exposes: {
               "./FoodProfile": "./src/components/FoodProfile", // Ejemplo, aqui se exponen los componentes
               "./FoodListLocal": "./src/components/FoodListLocal",
-              "./FoodListMini": "./src/components/FoodListMini"
+              "./FoodListMini": "./src/components/FoodListMini",
+              "./FoodLocalSearch": "./src/components/FoodLocalSearch"
             },
             shared: {
               ...dependencies,

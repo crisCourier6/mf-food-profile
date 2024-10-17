@@ -1,47 +1,45 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { useEffect, useState } from 'react';
 import api from '../api';
-import { useParams } from "react-router-dom"
-import { Box, Button, IconButton, Paper, Typography, Dialog, DialogTitle, DialogContent, TextField, DialogActions } from '@mui/material';
+import { Box, Button, IconButton, Paper,Typography, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import { UserCommentsFood } from '../interfaces/UserCommentsFood';
 import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
-import EditRoundedIcon from '@mui/icons-material/EditRounded';
-import ReplyRoundedIcon from '@mui/icons-material/ReplyRounded';
+import Visibility from "@mui/icons-material/Visibility"
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import { FoodLocal } from '../interfaces/foodLocal';
 import dayjs from 'dayjs';
 
-const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = ({ expanded, toggleExpand }) => {
-    const { id } = useParams()
+const FoodCommentList: React.FC<{ foodLocal:FoodLocal|null, show:boolean, hide:()=>void }> = ({ foodLocal, show, hide }) => {
     const currentUserId = window.localStorage.getItem("id")
     const [comments, setComments] = useState<UserCommentsFood[]>([])
     const commentsURL = "/comments-food"
-    const commentsRef = useRef<HTMLDivElement>(null);
     const [selectedComment, setSelectedComment] = useState<UserCommentsFood | null>(null);
     const [selectedCommentParent, setSelectedCommentParent] = useState<UserCommentsFood | null>(null);
-    const [editedContent, setEditedContent] = useState("");
-    const [showCreateDialog, setShowCreateDialog] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)
     const [showEditDialog, setShowEditDialog] = useState(false)
-    const [newCommentContent, setNewCommentContent] = useState("");
 
     useEffect(()=>{
-        let queryParams = `?f=${id}&wc=true&op=true&wp=true&wu=true`
-        console.log(`${commentsURL}${queryParams}`)
-        api.get(`${commentsURL}${queryParams}`, 
-            {
-                withCredentials: true,
-                 headers: {
-                     Authorization: "Bearer " + window.localStorage.token
-                 }
-            }
-        )
-        .then(res => {
-            console.log(res.data)
-            setComments(res.data)
-        })
-        .catch(error => {
-            console.log(error.response.data)
-        })
-    },[])
+        if (foodLocal){
+            let queryParams = `?f=${foodLocal.id}&wc=true&op=true&wp=true&wu=true`
+            console.log(`${commentsURL}${queryParams}`)
+            api.get(`${commentsURL}${queryParams}`, 
+                {
+                    withCredentials: true,
+                    headers: {
+                        Authorization: "Bearer " + window.localStorage.token
+                    }
+                }
+            )
+            .then(res => {
+                console.log(res.data)
+                setComments(res.data)
+            })
+            .catch(error => {
+                console.log(error.response.data)
+            })
+        }   
+        
+    },[foodLocal])
 
     const updateComment = (updatedComment: UserCommentsFood) => {
         if (selectedCommentParent){
@@ -97,38 +95,11 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
         
     };
 
-    const addNewComment = (newComment: UserCommentsFood) => {
-        if (selectedCommentParent){
-            setComments((prevComments) =>
-                prevComments.map((comment) => {
-                    if (comment.id === selectedCommentParent.id) {
-                        return {
-                            ...comment,
-                            commentHasChild: [
-                                ...comment.commentHasChild,
-                                {
-                                    parentId: selectedCommentParent.id,
-                                    childId: newComment.id,
-                                    childComment: newComment,
-                                },
-                            ],
-                        };
-                    }
-                    return comment;
-                })
-            );
-        }
-        else{
-            setComments(prevComments => [newComment, ...prevComments]);
-        }
-        
-    };
-
     const handleUpdateComment = () => {
         if (selectedComment) {
             const updatedComment = {
                 ...selectedComment,
-                content: editedContent
+                isHidden: !selectedComment.isHidden
             };
 
             api.patch(`${commentsURL}/${selectedComment.id}`, updatedComment, {
@@ -171,59 +142,23 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
         setShowDeleteDialog(false);  // Close dialog after deleting
     }
 
-    const openCreateDialog = (comment: UserCommentsFood|null, parentComment:UserCommentsFood|null) => {
-        setSelectedComment(comment)
-        setSelectedCommentParent(parentComment)
-        setShowCreateDialog(true)
-    };
-    const closeCreateDialog = () => {
-        setSelectedComment(null)
-        setSelectedCommentParent(null)
-        setNewCommentContent("")
-        setShowCreateDialog(false)
-    };
-
-    const handleCreateComment = () => {
-        const newComment = {
-            content: selectedComment?`(Respondiendo a ${selectedComment.user.name}) ${newCommentContent}`: newCommentContent,
-            userId: currentUserId,
-            foodLocalId: id,
-            commentHasParent: selectedCommentParent? selectedCommentParent.id : null
-        };
-        
-        // Call your API to create a comment
-        api.post(commentsURL, newComment, {
-            withCredentials: true,
-            headers: {
-                Authorization: "Bearer " + window.localStorage.token
-            }
-        }).then(res => {
-            console.log(res);
-            addNewComment(res.data) // Call the parent's new comment function
-            setNewCommentContent("");  // Clear the input fields after creating
-            closeCreateDialog();
-        }).catch(error => {
-            console.log(error);
-        })
-        .finally(()=>{
-            setSelectedComment(null)
-            setSelectedCommentParent(null)
-        })
-    };
-    
-
-    const openEditDialog = (comment: UserCommentsFood, parentComment: UserCommentsFood | null) => {
-        setSelectedComment(comment);
-        setSelectedCommentParent(parentComment)
-        setEditedContent(comment.content || "");
-        setShowEditDialog(true);
-    };
-
     // Open the delete confirmation dialog
+    
     const openDeleteDialog = (comment: UserCommentsFood, parentComment: UserCommentsFood | null) => {
         setSelectedComment(comment);
         setSelectedCommentParent(parentComment)
         setShowDeleteDialog(true);
+    };
+    const closeDeleteDialog = () => {
+        setSelectedComment(null)
+        setSelectedCommentParent(null)
+        setShowDeleteDialog(false)
+    }
+
+    const openEditDialog = (comment: UserCommentsFood, parentComment: UserCommentsFood | null) => {
+        setSelectedComment(comment);
+        setSelectedCommentParent(parentComment)
+        setShowEditDialog(true);
     };
 
     const closeEditDialog = () => {
@@ -232,49 +167,22 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
         setShowEditDialog(false)
     }
 
-    const closeDeleteDialog = () => {
-        setSelectedComment(null)
-        setSelectedCommentParent(null)
-        setShowDeleteDialog(false)
-    }
-
 
     return ( <>
-        <Box sx={{ 
-            display: "flex",
-            flexDirection: "column",
-            width: "100%",
-            gap:2,
-        }}>
-            <Paper elevation={0} square={true} sx={{
-                bgcolor: "primary.main",
-                color: "primary.contrastText",
-                border: "5px solid",
-                borderColor: "primary.main",
-                justifyContent: "flex-start",
-                display: "flex",
-                textIndent: 10,
-                cursor: "pointer"
-            }}>
-                <Typography 
-                width={"100%"} 
-                variant='h6' 
-                color= "primary.contrastText" 
-                onClick={toggleExpand}
-                sx={{
-                    display: "flex",
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    alignItems: "center" // Ensure vertical alignment
-                }}>
-                    <Box sx={{ }}>Comentarios</Box>  {/* FlexGrow pushes the next box to the right */}
-                    <Box>{expanded ? "▲" : "▼"}</Box>
-                </Typography>
-            </Paper>
-            {expanded && <>
-                <Button variant='contained' onClick={()=>openCreateDialog(null, null)}>
-                    Comentar
-                </Button>
+        <Dialog open={show} onClose={hide} fullScreen
+            PaperProps={{
+                sx: {
+                    maxHeight: '80vh', 
+                    width: "95vw",
+                    maxWidth: "450px"
+                }
+            }}
+        >
+            <DialogTitle>
+                Comentarios en {foodLocal?.name}
+            </DialogTitle>
+            <DialogContent>
+            
                 {comments.map(comment => {
                     return (
                         <Box key={comment.id} sx={{display: "flex", flexDirection: "column", alignItems: "flex-end", width:"100%",}}>
@@ -301,34 +209,25 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
                                     >
                                         {comment.user?.name} 
                                     </Typography>
-                                    {comment.userId === currentUserId  
-                                        ?<>                                        
                                         <IconButton size="small" onClick={()=>openEditDialog(comment, null)}>
-                                        <EditRoundedIcon sx={{ 
-                                            color: "primary.contrastText",
-                                            fontSize: 18
-                                        }}/>
-                                        </IconButton>    
+                                            {comment.isHidden
+                                                ?<Visibility sx={{ 
+                                                    color:"primary.contrastText", 
+                                                    fontSize:18
+                                                }} />
+                                                :<VisibilityOff sx={{ 
+                                                    color:"primary.contrastText", 
+                                                    fontSize:18
+                                                }} />
+                                            }
+                                            
+                                        </IconButton>
                                         <IconButton size="small" onClick={()=>openDeleteDialog(comment, null)}>
                                             <DeleteForeverRoundedIcon sx={{ 
                                                 color:"primary.contrastText", 
                                                 fontSize:18
                                             }} />
                                         </IconButton>
-                                        <IconButton size="small" onClick={()=>openCreateDialog(null, comment)}>
-                                            <ReplyRoundedIcon sx={{ 
-                                                color:"primary.contrastText", 
-                                                fontSize:18
-                                            }} />
-                                        </IconButton>
-                                        </>
-                                        :<IconButton size="small" onClick={()=>openCreateDialog(null, comment)}>
-                                            <ReplyRoundedIcon sx={{ 
-                                                color:"primary.contrastText", 
-                                                fontSize:18
-                                            }} />
-                                        </IconButton>
-                                    }
                                 </Paper>
                                 <Box sx={{display: "flex", flexDirection: "column", width: "100%"}}>
                                     <Typography variant="subtitle2" textAlign={"justify"} sx={{px:1, fontStyle: comment.isHidden?"italic":"normal"}}>
@@ -367,27 +266,25 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
                                             >
                                                 {parentChild.childComment.user?.name} 
                                             </Typography>
-                                            {parentChild.childComment.userId === currentUserId && <>                                        
                                                 <IconButton size="small" onClick={()=>openEditDialog(parentChild.childComment, comment)}>
-                                                    <EditRoundedIcon sx={{ 
-                                                        color: "primary.contrastText",
-                                                        fontSize: 18
-                                                    }}/>
-                                                </IconButton>    
+                                                    {parentChild.childComment.isHidden
+                                                        ?<Visibility sx={{ 
+                                                            color:"primary.contrastText", 
+                                                            fontSize:18
+                                                        }} />
+                                                        :<VisibilityOff sx={{ 
+                                                            color:"primary.contrastText", 
+                                                            fontSize:18
+                                                        }} />
+                                                    }
+                                                    
+                                                </IconButton>
                                                 <IconButton size="small" onClick={()=>openDeleteDialog(parentChild.childComment, comment)}>
                                                     <DeleteForeverRoundedIcon sx={{ 
                                                         color:"primary.contrastText", 
                                                         fontSize:18
                                                     }} />
                                                 </IconButton>
-                                                </>
-                                            }
-                                            <IconButton size="small" onClick={()=>openCreateDialog(parentChild.childComment, comment)}>
-                                                <ReplyRoundedIcon sx={{ 
-                                                    color:"primary.contrastText", 
-                                                    fontSize:18
-                                                }} />
-                                            </IconButton>
                                         </Paper>
                                         <Box sx={{display: "flex", flexDirection: "column", width: "100%"}}>
                                             <Typography variant="subtitle2" textAlign={"justify"} sx={{px:1, fontStyle:parentChild.childComment.isHidden?"italic":"normal"}}>
@@ -406,8 +303,26 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
                             })}
                         </Box>  
                     )
-                })
-            }
+                })}
+            </DialogContent>
+            <DialogActions>
+                <Button variant='contained' onClick={hide}>
+                    Cerrar
+                </Button>
+            </DialogActions>
+        </Dialog>
+            
+            {/* Delete Comment Confirmation Dialog */}
+            <Dialog open={showDeleteDialog} onClose={closeDeleteDialog}>
+                <DialogTitle>Borrar comentario</DialogTitle>
+                <DialogContent>
+                    <Typography>¿Seguro que quieres borrar este comentario?</Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={closeDeleteDialog}>Cancelar</Button>
+                    <Button onClick={handleDeleteComment} variant="contained" color="error">Borrar</Button>
+                </DialogActions>
+            </Dialog>
             <Dialog open={showEditDialog} onClose={closeEditDialog}
                 PaperProps={{
                     sx: {
@@ -417,71 +332,28 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
                     }
                 }} 
             >
-                <DialogTitle>Editar Comentario</DialogTitle>
+                <DialogTitle>{selectedComment?.isHidden
+                        ?<>Restaurar comentario</>
+                        :<>Desactivar comentario</>
+                    }
+                </DialogTitle>
                 <DialogContent>
-                    <TextField
-                        fullWidth
-                        label="Comentario"
-                        multiline
-                        rows={4}
-                        value={editedContent}
-                        onChange={(e) => setEditedContent(e.target.value)}
-                        sx={{mt:2}}
-                    />
+                    <Typography variant='subtitle1'>
+                        {selectedComment?.isHidden
+                            ?<>¿Seguro que desea desactivar este comentario? El comentario seguirá existiendo pero su contenido no será visible</>
+                            :<>¿Seguro que desea restaurar este comentario? Su contenido será visible para todos</>
+                        }
+                    </Typography>
                     
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={closeEditDialog}>Cancelar</Button>
-                    <Button onClick={handleUpdateComment} variant="contained" disabled={editedContent==""}>Guardar</Button>
+                    <Button onClick={handleUpdateComment} variant="contained">Aceptar</Button>
                 </DialogActions>
             </Dialog>
+        </>
 
-            {/* Delete Comment Confirmation Dialog */}
-            <Dialog open={showDeleteDialog} onClose={closeDeleteDialog}>
-                <DialogTitle>Borrar comentario</DialogTitle>
-                <DialogContent>
-                    <Typography>¿Seguro que quieres borrar tu comentario?</Typography>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={closeDeleteDialog}>Cancelar</Button>
-                    <Button onClick={handleDeleteComment} variant="contained" color="error">Borrar</Button>
-                </DialogActions>
-            </Dialog>
-            <Dialog open={showCreateDialog} onClose={closeCreateDialog}
-            PaperProps={{
-                sx: {
-                    maxHeight: '80vh', 
-                    width: "85vw",
-                    maxWidth: "450px"
-                }
-            }} >
-                <DialogTitle>Nuevo comentario</DialogTitle>
-                <DialogContent>
-                    <TextField
-                        label="Comentario"
-                        fullWidth
-                        multiline
-                        rows={4}
-                        value={newCommentContent}
-                        onChange={(e) => setNewCommentContent(e.target.value)}
-                        sx={{mt:2}}
-                    />
-                    
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={closeCreateDialog}>Cancelar</Button>
-                    <Button onClick={handleCreateComment} variant="contained" color="primary">
-                        Guardar
-                    </Button>
-                </DialogActions>
-            </Dialog>
-            </>
-        }
-            
-            
-        </Box>
-    </>
     )
 };
 
-export default FoodComments;
+export default FoodCommentList;

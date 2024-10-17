@@ -1,14 +1,8 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
-import { useNavigate, useParams } from "react-router-dom"
-import { Box, Button, IconButton, Paper, Typography, Accordion, AccordionActions, AccordionDetails, AccordionSummary } from '@mui/material';
-import { FoodExternal } from '../interfaces/foodExternal';
+import { Button, Paper, Typography, Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
 import "./Components.css"
-import ThumbUpRoundedIcon from '@mui/icons-material/ThumbUpRounded';
-import ThumbDownRoundedIcon from '@mui/icons-material/ThumbDownRounded';
-import CircularProgress from '@mui/material/CircularProgress';
-import { ExpandMore } from '@mui/icons-material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 type accordionItemsType = {
     name:string,
@@ -88,7 +82,7 @@ const FoodAdditive: React.FC<{additives:string[]}> = (props) => {
             
             >
                 <AccordionSummary
-                expandIcon={<ExpandMore />}
+                expandIcon={<ExpandMoreIcon />}
                 aria-controls="panel1-content"
                 id={`panel${index}-header`}
                 sx={{textAlign: "left"}}

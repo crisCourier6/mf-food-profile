@@ -18,8 +18,5 @@ export interface FoodExternal{
     serving_quantity?: string,
     serving_size?: string,
     traces_tags?: string[]
-    image_nutrition_url?: string,
-    image_url?: string,
-    image_packaging_url?: string,
-    image_ingredients_url?: string,
+    selected_images?:object
 }

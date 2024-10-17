@@ -1,123 +1,67 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../api';
 import { FoodLocal } from '../interfaces/foodLocal';
 import { UserRatesFood } from '../interfaces/userRatesFood';
-import { Box, Card, CardContent, CardMedia, Grid, IconButton, Paper, Typography, RadioGroup, FormControlLabel, Radio, ToggleButtonGroup, ToggleButton, Alert, Backdrop, Button, Dialog, DialogActions, DialogContent, InputAdornment, TextField, Snackbar, SnackbarCloseReason } from '@mui/material';
+import { Box, Card, CardContent, CardMedia, Grid, IconButton, Typography, ToggleButtonGroup, ToggleButton, 
+    Alert, Backdrop, Button, Dialog, DialogActions, DialogContent, Snackbar, SnackbarCloseReason } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
-import ThumbUpRoundedIcon from '@mui/icons-material/ThumbUpRounded';
-import ThumbDownRoundedIcon from '@mui/icons-material/ThumbDownRounded';
 import NoPhoto from "../../public/no-photo.png"
 import { CircularProgress } from "@mui/material";
 import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { watch } from 'fs';
-import FoodLike from './FoodLike';
-import FoodLikeNoGet from './FoodLikeNoGet';
-
-type FoodMini = {
-    id:string,
-    userId:string,
-    name:string,
-    picture:string,
-    likes:number,
-    dislikes:number,
-    rating:string
-}
+import FoodRate from './FoodRate';
+import FoodCommentsCount from './FoodCommentsCount';
 
 const FoodListMini: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible }) => {
     const navigate = useNavigate()
     const { id } = useParams()
-    const getFoodRatingsURL = "http://192.168.100.6:8080/food/ratings/byFood/"
-    const getUserRatingsURL = "http://192.168.100.6:8080/food/ratings/byUser/"
-    const getFoodLocalURL = "http://192.168.100.6:8080/food/local/"
-    const foodRatingsURL = "http://192.168.100.6:8080/food/ratings/byuserandfood/"
-    const [userRatings, setUserRatings] = useState<UserRatesFood[]>([])
-    const [foodMini, setFoodMini] = useState<FoodMini[]>([])
-    const [foodToDelete, setFoodToDelete] = useState<FoodMini>({
-        id:"",
-        userId:"",
-        name:"",
-        picture:"",
-        likes:0,
-        dislikes:0,
-        rating:""
-    })
-    const [foodMiniFiltered, setFoodMiniFiltered] = useState<FoodMini[]>([])
+    const getFoodLocalURL = "/food/local"
+    const foodRatingsURL = "/food/ratings"
+    const [foods, setFoods] = useState<FoodLocal[]>([])
+    const [selectedFood, setSelectedFood] = useState<FoodLocal|null>(null)
+    const [foodsFiltered, setFoodsFiltered] = useState<FoodLocal[]>([])
     const [filter, setFilter] = useState("all")
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)
     const [successOpen, setSuccessOpen] = useState(false)
     const [allDone, setAllDone] = useState(false)
+    const queryParams = `?u=${id}&wr=true`
+
     useEffect(()=>{
-       axios.get(getUserRatingsURL + id, 
+        document.title = "Mi historial de alimentos - EyesFood";
+       api.get(`${getFoodLocalURL}${queryParams}`, 
                 {
                     withCredentials: true,
                     headers: {
                         Authorization: "Bearer " + window.localStorage.token
                     }
                 }) 
-                .then( async userRatingsResponse => {
-                    
-                    if (userRatingsResponse && userRatingsResponse.data.length>0){
-                        setUserRatings(userRatingsResponse.data)
-                        let tempFoodMini:FoodMini[]= []
-                        for (var userRating of userRatingsResponse.data){
-                            const foodRatingsResponse = await axios.get(getFoodRatingsURL + userRating.foodLocalId, {
-                                withCredentials: true,
-                                headers: {
-                                    Authorization: "Bearer " + window.localStorage.token
-                                }
-                            })
-
-                            const foodLocalResponse = await axios.get(getFoodLocalURL + userRating.foodLocalId, {
-                                withCredentials: true,
-                                headers: {
-                                    Authorization: "Bearer " + window.localStorage.token
-                                }
-                            })
-                            tempFoodMini.push({...foodLocalResponse.data, 
-                                                ...foodRatingsResponse.data, 
-                                                rating: userRating.rating,
-                                                userId: userRating.userId,
-                                                picture: foodLocalResponse.data.picture=="defaultFood.png"?NoPhoto:foodLocalResponse.data.picture})
-                        }
-                        setFoodMini(tempFoodMini)
-                        setFoodMiniFiltered(tempFoodMini)
-                    }
-                    else{
-                        setAllDone(true)
-                    }
+                .then( res => {
+                    const updatedData = res.data.map((food:any) => {
+                        let userRating = food.userRatesFood[0]
+                        return {...food, userRatesFood: userRating}
+                    })
+                    setFoods(updatedData)
+                })
+                .catch(error=>{
+                    console.log(error)
                 })
                 .finally(()=>{
                     setAllDone(true)
                 })
-    }, [id, getFoodRatingsURL, getUserRatingsURL, getFoodLocalURL])
-
-    const handleRatingChange = (foodId: string, newRating: string, likedNumber:number, dislikedNumber:number) => {
-        setFoodMini((prevFoodMini) =>
-            prevFoodMini.map((food) =>
-              food.id === foodId ? { ...food, rating: newRating, likes:likedNumber, dislikes:dislikedNumber  } : food
-            )
-        )
-    }
+    }, [])
 
     useEffect(() => {
+        console.log(foods)
         if (filter === 'all') {
-            setFoodMiniFiltered(foodMini);
+            setFoodsFiltered(foods);
         } 
         else {
-          setFoodMiniFiltered(foodMini.filter((item) => {
-            return item.rating === filter     
+          setFoodsFiltered(foods.filter((food:FoodLocal) => {
+            return food.userRatesFood?.rating === filter     
         }));
         }
         
-      }, [foodMini]);
-
-    useEffect(()=>{
-        setTimeout(() => {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }, 100); // Adjust the delay as needed
-    }, [foodMiniFiltered])
+      }, [foods]);
 
     const handleFilterChange = (event: React.MouseEvent<HTMLElement>, newFilter:string) => {
         if (newFilter === null) {
@@ -127,10 +71,16 @@ const FoodListMini: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible 
     
         // Filter data based on the selected value
         if (newFilter === 'all') {
-            setFoodMiniFiltered(foodMini);
+            setFoodsFiltered(foods);
+            setTimeout(() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 100); // Adjust the delay as needed
         } 
         else {
-            setFoodMiniFiltered(foodMini.filter(item => item.rating === newFilter));
+            setFoodsFiltered(foods.filter(item => item.userRatesFood?.rating === newFilter));
+            setTimeout(() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 100); // Adjust the delay as needed
         }
     };
 
@@ -149,26 +99,78 @@ const FoodListMini: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible 
         setSuccessOpen(false);
       }
 
-    const handleFoodDelete = (userId:string, foodLocalId:string) => {
-        axios.delete(foodRatingsURL + foodLocalId + "/" + userId, {
+    const handleFoodDelete = () => {
+        api.delete(`${foodRatingsURL}/byuserandfood/${selectedFood?.userRatesFood?.userId}/${selectedFood?.userRatesFood?.foodLocalId}`, {
             withCredentials: true,
             headers: {
                 Authorization: "Bearer " + window.localStorage.token
             }
         })
-        .then(response => {
-            if (response.data.affected == 1){
-                setFoodMini(foodMini => foodMini?foodMini.filter(item => item.id !== foodLocalId):foodMini)
-                setFoodMiniFiltered(foodMiniFiltered => foodMiniFiltered?foodMiniFiltered.filter(item => item.id !== foodLocalId):foodMiniFiltered)
-                setShowDeleteDialog(false)
-                setSuccessOpen(true)
-            }
+        .then(res => {
+            setFoods(foods => foods?foods.filter(item => item.id !== selectedFood?.id):foods)
+            setFoodsFiltered(foodsFiltered => foodsFiltered?foodsFiltered.filter(item => item.id !== selectedFood?.id):foodsFiltered)
+            setShowDeleteDialog(false)
+            setSuccessOpen(true)
 
+        })
+        .catch(error=>{
+            console.log(error)
         })
     }
 
-    const handleDeleteDialog = (food:FoodMini) => {
-        setFoodToDelete(food)
+    const onRatingChange = (oldFood: FoodLocal, newRating : UserRatesFood) => {
+        if (newRating.rating==="likes"){
+            setFoods(prevFoods => 
+                prevFoods.map(food => 
+                    food.id === newRating.foodLocalId 
+                        ? { 
+                            ...food, 
+                            likes:food.userRatesFood?.rating==="neutral"
+                                                        ?food.likes+1:
+                                                        food.userRatesFood?.rating==="dislikes"
+                                                            ?food.likes+1
+                                                            :food.likes-1,
+                            dislikes: food.userRatesFood?.rating==="dislikes"?food.dislikes-1:food.dislikes,
+                            userRatesFood: newRating } // replace userRatesFood
+                        : food // keep the food unchanged
+                )
+            );
+        }
+
+        else if (newRating.rating ==="dislikes"){
+            setFoods(prevFoods => 
+                prevFoods.map(food => 
+                    food.id === newRating.foodLocalId 
+                        ? { 
+                            ...food, 
+                            dislikes:food.userRatesFood?.rating==="neutral"
+                                                            ?food.dislikes+1:
+                                                            food.userRatesFood?.rating==="likes"
+                                                                ?food.dislikes+1
+                                                                :food.dislikes-1,
+                            likes: food.userRatesFood?.rating==="likes"?food.likes-1:food.likes,
+                            userRatesFood: newRating } // replace userRatesFood
+                        : food // keep the food unchanged
+                )
+            );
+        }
+        else if (newRating.rating ==="neutral"){
+            setFoods(prevFoods => 
+                prevFoods.map(food => 
+                    food.id === newRating.foodLocalId 
+                        ? { 
+                            ...food, 
+                            dislikes:food.userRatesFood?.rating==="dislikes"?food.dislikes-1:food.dislikes,
+                            likes: food.userRatesFood?.rating==="likes"?food.likes-1:food.likes,
+                            userRatesFood: newRating } // replace userRatesFood
+                        : food // keep the food unchanged
+                )
+            );
+        }
+    }
+
+    const handleDeleteDialog = (food:FoodLocal) => {
+        setSelectedFood(food)
         setShowDeleteDialog(true)
     }
 
@@ -210,13 +212,13 @@ const FoodListMini: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible 
                     aria-label="filter options"
                     sx={{ width:"100%",display:"flex",flexDirection:"row",justifyContent:"center" }}
                 >
-                    <ToggleButton value="all" sx={{flex:1, fontSize:{xs:16, md:20}, py: 0.5}}>Todos</ToggleButton>
-                    <ToggleButton value="likes" sx={{flex:1, fontSize:{xs:16, md:20}, py: 0.5 }}>Me gustan</ToggleButton>
-                    <ToggleButton value="dislikes" sx={{flex:1, fontSize:{xs:16, md:20}, py: 0.5}}>No me gustan</ToggleButton>
+                    <ToggleButton value="all" sx={{flex:1, fontSize:{xs:16, md:18}, py: 0.5}}>Todos</ToggleButton>
+                    <ToggleButton value="likes" sx={{flex:1, fontSize:{xs:16, md:18}, py: 0.5 }}>Me gustan</ToggleButton>
+                    <ToggleButton value="dislikes" sx={{flex:1, fontSize:{xs:16, md:18}, py: 0.5}}>No me gustan</ToggleButton>
                 </ToggleButtonGroup>
             </Box>
             
-            { foodMiniFiltered.map((food)=>{
+            { foodsFiltered.map((food)=>{
                 return (
                 <Card key={food.id} sx={{
                 border: "4px solid", 
@@ -229,7 +231,7 @@ const FoodListMini: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible 
                 display:"flex",
                 }}>
                     <CardMedia sx={{width:"25%", borderRight: "4px solid", borderColor: "primary.dark", cursor: "pointer"}}
-                        image={food.picture}
+                        image={food.picture==="defaultFood.png"?NoPhoto:food.picture}
                         title={food.name}
                         onClick={()=> handleFoodClick(food.id)}>      
                     </CardMedia>
@@ -254,21 +256,22 @@ const FoodListMini: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible 
                             {food.name}
                         </Typography>
                         <Box sx={{
-                            width:"100%", 
-                            display:"flex", 
-                            flexDirection: "row",
-                            justifyContent: "space-between",
-                            height: "40%",
-                            bgcolor: "primary.dark"
-                            }}>
-                            <FoodLikeNoGet foodId={food.id} rating={food.rating} likes={food.likes} dislikes={food.dislikes} onRatingChange={handleRatingChange}/>
+                        width:"100%", 
+                        display:"flex", 
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        height: "40%",
+                        bgcolor: "primary.dark"
+                        }}>
                             
-                                <IconButton onClick={()=>handleDeleteDialog(food)}
-                                sx={{
-                                    color: "error.main"
-                                }}>
-                                    <DeleteForeverRoundedIcon fontSize="medium"/>
-                                </IconButton>
+                            <FoodRate food={food} onRatingChange={onRatingChange}/>
+                            <FoodCommentsCount id={food.id} onClick={()=>{}} noneColor='grey' someColor='#c9c9c9'/>
+                            <IconButton onClick={()=>handleDeleteDialog(food)}
+                            sx={{
+                                color: "error.main"
+                            }}>
+                                <DeleteForeverRoundedIcon fontSize="medium"/>
+                            </IconButton>
                                 
                             
                         </Box>
@@ -290,14 +293,14 @@ const FoodListMini: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible 
                 }}>
                     <DialogContent>
                         <Typography textAlign="justify">
-                            ¿Borrar {foodToDelete.name} del historial?
+                            ¿Borrar {selectedFood?.name} del historial?
                         </Typography>
                     </DialogContent>
                     <DialogActions>
                         <Button onClick={()=>setShowDeleteDialog(false)} variant='contained'>
                             No
                         </Button>
-                        <Button onClick={()=>handleFoodDelete(foodToDelete.userId, foodToDelete.id)} variant='contained'>
+                        <Button onClick={handleFoodDelete} variant='contained'>
                             Sí
                         </Button>
                     </DialogActions>

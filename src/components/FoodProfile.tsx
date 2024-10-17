@@ -1,23 +1,26 @@
 import React, { useRef } from 'react';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../api';
 import { FoodLocal } from '../interfaces/foodLocal';
-import { useLocation, useNavigate, useParams } from "react-router-dom"
-import { Box, Button, IconButton, Paper, Card, CardMedia, CardContent, Grid, Typography, Backdrop, Dialog, DialogContent, DialogContentText, DialogActions, DialogTitle } from '@mui/material';
-import { FoodExternal } from '../interfaces/foodExternal';
+import { useNavigate, useParams } from "react-router-dom"
+import { Box, Button, IconButton, Paper, Card, CardMedia, CardContent, Grid, Typography, Backdrop, 
+    Dialog, DialogContent, DialogContentText, DialogActions, DialogTitle, TableContainer, Table, 
+    TableHead, TableCell, TableRow, TableBody } from '@mui/material';
 import Carousel from 'react-material-ui-carousel';
 import NoPhoto from "../../public/no-photo.png"
 import "./Components.css"
-import { GridColDef, DataGrid } from '@mui/x-data-grid';
 import ImagesScores from '../images/ImagesScores';
 import ImagesAllergens from '../images/ImagesAllergens';
 import QuickLookLogo from "../../public/QuickLookLogo.png"
-import FoodLike from './FoodLike';
 import FoodComments from './FoodComments';
 import FoodAdditive from './FoodAdditive';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import LaunchRoundedIcon from '@mui/icons-material/LaunchRounded';
 import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
+import FoodRate from './FoodRate';
+import { UserRatesFood } from '../interfaces/userRatesFood';
+import FoodCommentsCount from './FoodCommentsCount';
+import Loading from './Loading';
 
 type NutritionValues = {
     id: string,
@@ -25,7 +28,11 @@ type NutritionValues = {
     serving: any
 }
 
-const Item = (props:any) =>{   
+interface ImageDisplayProps {
+    image: {img:string, alt:string}
+  }
+
+const ImageDisplay = (props:ImageDisplayProps) =>{   
     const [showImage, setShowImage] = useState(false)
     function handleImageClose(){
         setShowImage(false)
@@ -35,15 +42,22 @@ const Item = (props:any) =>{
     }
     return (
         <>
-        <Card sx={{border: "5px solid", borderColor: "primary.main", height:250}}>
-            <CardMedia sx={{height: 200, borderBottom: "5px solid", borderColor: "primary.main", cursor :"pointer"}}
-                image={props.item.img}
-                title={props.item.alt}
+        <Card sx={{border: "5px solid", borderColor: "primary.main", height:250, bgcolor: "primary.light", display: "flex", flexDirection:"column"}}>
+            <CardMedia component="img" sx={{
+            height: "95%", 
+            borderBottom: "5px solid", 
+            borderColor: "primary.main", 
+            cursor :"pointer",
+            objectFit: "contain",
+            width: "100%"
+            }}
+                image={props.image.img==="noPhoto"? NoPhoto :props.image.img}
+                title={props.image.alt}
                 onClick={handleImageOpen}>      
             </CardMedia>
-            <CardContent>
-                <Typography variant="subtitle1" color="primary.dark">
-                    {props.item.alt}
+            <CardContent sx={{bgcolor: "primary.main", display:"flex", alignItems: "center", justifyContent: "center", height: "5%"}}>
+                <Typography variant="h6" color="primary.contrastText">
+                    {props.image.alt}
                 </Typography>
             </CardContent>
         </Card>
@@ -51,14 +65,17 @@ const Item = (props:any) =>{
         sx={{width: "100vw"}}
         >
             <Dialog open={showImage} onClose={handleImageClose} scroll='paper' 
-                        sx={{width: "100%", 
-                            maxWidth: "500px", 
-                            margin: "auto"
-                        }}>
+                        
+                        PaperProps={{
+                            sx: { 
+                              width: "90vw", 
+                              margin: "auto"
+                            }
+                          }}>
                         <DialogContent>
                             <img
-                                src={props.item.img}
-                                alt={props.item.alt}
+                                src={props.image.img}
+                                alt={props.image.alt}
                                 style={{ width: '100%', height: 'auto' }}
                             />
                         </DialogContent>
@@ -111,7 +128,6 @@ const allergensEngSpa: {[key: string]: string} = {
 }
 
 function Allergens(allergens:string[], traces:string[]){
-    console.log(traces)
     if ((!allergens || allergens.length == 0 || allergens.includes("en:none")) && (!traces || traces.length == 0)){
         return (
             <Paper elevation={0} sx={{p:2}}>
@@ -127,7 +143,7 @@ function Allergens(allergens:string[], traces:string[]){
             <ul style={{ paddingLeft: 10 }}>
                 {allergens.map(eng => {
                     return (
-                        <Typography variant='subtitle1' color= "primary.dark">
+                        <Typography key={eng} variant='subtitle1' color= "primary.dark">
                             <li> {allergensEngSpa[eng]}</li>
                         </Typography>
                     )
@@ -136,7 +152,7 @@ function Allergens(allergens:string[], traces:string[]){
             <ul style={{ paddingLeft: 10 }}>
                 {traces.map(eng => {
                     return (
-                        <Typography variant='subtitle1' color= "primary.dark">
+                        <Typography key={eng} variant='subtitle1' color= "primary.dark">
                             <li> Puede contener {allergensEngSpa[eng].toLowerCase()}</li>
                         </Typography>
                     )
@@ -173,7 +189,9 @@ function Ingredients(ingredients:string){
     }
     return (
         <Paper elevation={0} sx={{textAlign:"justify", pt: 1, pb: 1}}>
-            {ingredients}  
+            <Typography variant='subtitle2'>
+                {ingredients} 
+            </Typography> 
         </Paper>
     )
 }
@@ -188,49 +206,50 @@ function NutritionTable(nutritionValues:NutritionValues[]|undefined){
     }
     return (<>
 
-        <Box sx={{
-            display:"flex",
-            flexDirection:"row",
-            justifyContent: "space-around",
-            pb: 1
-        }}>
-            <Box sx={{
-                display:"flex",
-                flexDirection:"column",
-                alignItems: "start"
-            }}>
-                <span>&nbsp;&nbsp;</span>
-                {nutritionValues.map(row => {
-                    return (
-                        <Typography fontWeight="bold" fontSize={12}>{row.id}</Typography>
-                    )
-                })}
-            </Box>
-            <Box sx={{
-                display:"flex",
-                flexDirection:"column",
-                alignItems: "end"
-            }}>
-                <Typography fontWeight="bold">100 g</Typography>
-                {nutritionValues.map(row => {
-                    return (
-                        <Typography fontSize={12}>{row.hundred}</Typography>
-                    )
-                })}
-            </Box>
-            <Box sx={{
-                display:"flex",
-                flexDirection:"column",
-                alignItems: "end"
-            }}>
-                <Typography fontWeight="bold">1 porción</Typography>
-                {nutritionValues.map(row => {
-                    return (
-                        <Typography fontSize={12}>{row.serving}</Typography>
-                    )
-                })}
-            </Box>
-        </Box>
+        <TableContainer component={Paper} sx={{ marginBottom: 2, width:"100%",borderRadius:0 }}>
+            <Table aria-label="user stats table">
+                <TableHead>
+                    <TableRow>
+                        <TableCell sx={{bgcolor: "primary.main",  padding: '2px 4px'}}>
+                            <Typography variant="subtitle2" sx={{color: "primary.contrastText"}}>
+                                Item
+                            </Typography>
+                        </TableCell>
+                        <TableCell sx={{bgcolor: "primary.main",  padding: '2px 4px'}} align="right">
+                            <Typography variant="subtitle2" sx={{color: "primary.contrastText"}}>
+                                100g/100 ml
+                            </Typography>
+                        </TableCell>
+                        <TableCell sx={{bgcolor: "primary.main",  padding: '2px 4px'}} align="right">
+                            <Typography variant="subtitle2" sx={{color: "primary.contrastText"}}>
+                                1 porción
+                            </Typography>
+                        </TableCell>
+                    </TableRow>
+                </TableHead>
+                <TableBody>
+                    {nutritionValues.map((nutriment, index)=> (
+                        <TableRow key={nutriment.id} sx={{ height: 30,  bgcolor: index % 2 === 0 ? "transparent" : "secondary.light"  }}>
+                        <TableCell sx={{ padding: '4px 8px' }}>
+                            <Typography variant='subtitle2'>
+                                <strong>{nutriment.id}</strong>
+                            </Typography>
+                        </TableCell>
+                        <TableCell align="right" sx={{ padding: '4px 8px' }}>
+                            <Typography variant="subtitle2">
+                                <strong>{nutriment.hundred}</strong>
+                            </Typography>
+                        </TableCell>
+                        <TableCell align="right" sx={{ padding: '4px 8px' }}>
+                            <Typography variant="subtitle2">
+                                <strong>{nutriment.serving}</strong>
+                            </Typography>
+                        </TableCell>
+                    </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        </TableContainer>
 
     </>
     )
@@ -245,9 +264,10 @@ function Scores(scores:string[]){
                 paddingTop: 2,
                 paddingBottom: 2,
             }}>
-                {scores.map(score=>{
+                {scores.map((score, i)=>{
                     return (
                         <Box
+                            key={i}
                             component="img"
                             sx={{
                                 height: "120px",
@@ -264,7 +284,6 @@ function Scores(scores:string[]){
 
 function UserFoodPrefs(foodAllergens:string[], foodTraces: string[]){
     const userFoodPrefs:string[] = window.localStorage["food-prefs"].split(",")
-    console.log(foodTraces)
     if ((!foodAllergens || foodAllergens.length == 0 || foodAllergens.includes("en:none")) && (!foodTraces || foodTraces.length == 0)){
         return (<></>)
     }
@@ -279,7 +298,7 @@ function UserFoodPrefs(foodAllergens:string[], foodTraces: string[]){
                     
                         if(foodAllergens && foodAllergens.includes(allergen)){
                             return (
-                                <Box sx={{
+                                <Box key={allergen} sx={{
                                     display:"flex",
                                     flexDirection:"column",
                                     justifyContent: "center",
@@ -327,18 +346,29 @@ function UserFoodPrefs(foodAllergens:string[], foodTraces: string[]){
     </>
     )
 }
+
+function truncateToDecimalPlaces(num:number, decimalPlaces:number) {
+    const factor = Math.pow(10, decimalPlaces);
+    return Math.floor(num * factor) / factor;
+}
       
-const FoodProfile: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible }) => {
-    const [foodExternalSingle, setFoodExternalSingle] = useState<FoodExternal>({id:"", allergens_tags:[]})
+const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({ isAppBarVisible, onReady }) => {
+    const [foodExternalSingle, setFoodExternalSingle] = useState<FoodLocal|null>(null)
     const [foodFullName, setFoodFullName] = useState<string>("")
+    const [firstTime, setFirstTime] = useState("")
     const [imageArr, setImageArr] = useState([{img:"",alt:""}])
     const [nutritionRows, setNutritionRows] = useState<NutritionValues[]>()
     const [showQuickLookInfo, setShowQuickLookInfo] = useState(false)
     const [animation, setAnimation] = useState<string>("none")
     const [transform, setTransform] = useState<string>("translatex(0px)")
+    const commentsRef = useRef<HTMLDivElement>(null);
+    const [expandedComments, setExpandedComments] = useState(false);
     const textRef = useRef<HTMLSpanElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-
+    const foodRatingsURL = "/food/ratings"
+    const foodURL = "/food/external"
+    const queryParams = `?wr=true&u=${window.localStorage.id}`
+    const [allDone, setAllDone] = useState(false)
     const { id } = useParams()
     const navigate = useNavigate()
 
@@ -368,8 +398,6 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible }
     }, [foodFullName, textRef.current, containerRef.current]);
 
     useEffect(()=>{
-        console.log(animation)
-        console.log(transform)
     },[animation,transform])
 
     useEffect(()=>{
@@ -380,113 +408,208 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible }
         // else {
         //     window.localStorage.removeItem("reloaded")
         // }
-        const url = "http://192.168.100.6:8080/food/external/" + id
-        axios.get(url, {
+        api.get(`${foodURL}/${id}${queryParams}`, {
             withCredentials: true,
              headers: {
                  Authorization: "Bearer " + window.localStorage.token
              }
         })
         .then((response)=>{
-            console.log(response.data)
             if(!response.data){
-                console.log("no hay")
                 return navigate("/food/" + id + "/edit")
                 
             }
             else{
-                setFoodExternalSingle(response.data.product)
-                let foodName = ""
-                if(response.data.product.product_name){
-                    foodName = response.data.product.product_name
+                let newUserRatesFood = {}
+                if (response.data.userRatesFood.length>0){
+                    newUserRatesFood = response.data.userRatesFood[0]
+                    
                 }
-                if(response.data.product.brands){
-                    foodName = foodName + " - " + response.data.product.brands.split(",")[0]
+                else{
+                    setFirstTime(response.data.id)
+                     newUserRatesFood = {userId: window.localStorage.id, foodLocalId: response.data.id, rating: "neutral"}
                 }
-                if (response.data.product.quantity){
-                    foodName = foodName + " - " + response.data.product.quantity
-                }
-                setFoodFullName(foodName)
+                let food = {...response.data, userRatesFood: newUserRatesFood}
+                setFoodExternalSingle(food)
+                setFoodFullName(food.name)
+                document.title = `${food.foodData.product_name} - EyesFood`
                 let images = []
-                response.data.product.image_url 
-                    ? images.push({img:response.data.product.image_url, alt:"Principal"}) 
-                    : images.push({img:NoPhoto, alt:"Principal"})
-                response.data.product.image_nutrition_url 
-                    ? images.push({img:response.data.product.image_nutrition_url, alt:"Nutrición"}) 
-                    : images.push({img:NoPhoto, alt:"Nutrición"})
-                response.data.product.image_packaging_url 
-                    ? images.push({img:response.data.product.image_packaging_url, alt:"Empaquetado"}) 
-                    : images.push({img:NoPhoto, alt:"Empaquetado"})
-                response.data.product.image_ingredients_url 
-                    ? images.push({img:response.data.product.image_ingredients_url, alt:"Ingredientes"}) 
-                    : images.push({img:NoPhoto, alt:"Ingredientes"})
+                if (food.foodData.selected_images){
+                    food.foodData.selected_images.front?.display
+                        ? images.push({img: food.foodData.selected_images.front.display.es
+                                            || food.foodData.selected_images.front.display.en 
+                                            || "noPhoto", alt:"Principal"}) 
+                        : images.push({img:"noPhoto", alt:"Principal"})
+                    food.foodData.selected_images.nutrition?.display
+                        ? images.push({img: food.foodData.selected_images.nutrition.display.es
+                                            || food.foodData.selected_images.nutrition.display.en 
+                                            || "noPhoto", alt:"Nutrición"}) 
+                        : images.push({img:"noPhoto", alt:"Nutrición"})
+                    food.foodData.selected_images.packaging?.display
+                        ? images.push({img: food.foodData.selected_images.packaging.display.es
+                            || food.foodData.selected_images.packaging.display.en 
+                            || "noPhoto", alt:"Empaquetado"}) 
+                        : images.push({img:"noPhoto", alt:"Empaquetado"})
+                    food.foodData.selected_images.ingredients?.display
+                        ? images.push({img: food.foodData.selected_images.ingredients.display.es
+                            || food.foodData.selected_images.ingredients.display.en 
+                            || "noPhoto", alt:"Ingredientes"}) 
+                        : images.push({img:"noPhoto", alt:"Ingredientes"})
+                }
+                else{
+                    images.push({img:"noPhoto", alt:"Principal"})
+                    images.push({img:"noPhoto", alt:"Empaquetado"})
+                    images.push({img:"noPhoto", alt:"Nutrición"})
+                    images.push({img:"noPhoto", alt:"Ingredientes"})
+                }
+                
                 setImageArr(images)
 
                 const nutrition = []
-                response.data.product.nutriments["energy-kcal_100g"]
+                food.foodData.nutriments["energy-kcal_100g"]
                     ? nutrition.push({  id: "Energía (kcal)", 
-                                        hundred: response.data.product.nutriments["energy-kcal_100g"],
-                                        serving: response.data.product.nutriments["energy-kcal_serving"]?response.data.product.nutriments["energy-kcal_serving"]:""})
+                                        hundred: food.foodData.nutriments["energy-kcal_100g"],
+                                        serving: food.foodData.nutriments["energy-kcal_serving"]?food.foodData.nutriments["energy-kcal_serving"]:""})
                     :null
-                response.data.product.nutriments.proteins_100g
-                    ? nutrition.push({  id: "Proteínas (" +  response.data.product.nutriments.proteins_unit + ")", 
-                                        hundred: response.data.product.nutriments.proteins_100g,
-                                        serving: response.data.product.nutriments.proteins_serving?response.data.product.nutriments.proteins_serving:""})
+                food.foodData.nutriments.proteins_100g
+                    ? nutrition.push({  id: "Proteínas (" +  food.foodData.nutriments.proteins_unit + ")", 
+                                        hundred: food.foodData.nutriments.proteins_100g,
+                                        serving: food.foodData.nutriments.proteins_serving?food.foodData.nutriments.proteins_serving:""})
                     :null
-                response.data.product.nutriments.fat_100g
-                    ? nutrition.push({  id: "Grasas Totales (" +  response.data.product.nutriments.fat_unit + ")", 
-                                        hundred: response.data.product.nutriments.fat_100g,
-                                        serving: response.data.product.nutriments.fat_serving?response.data.product.nutriments.fat_serving:""})
+                food.foodData.nutriments.fat_100g
+                    ? nutrition.push({  id: "Grasas Totales (" +  food.foodData.nutriments.fat_unit + ")", 
+                                        hundred: food.foodData.nutriments.fat_100g,
+                                        serving: food.foodData.nutriments.fat_serving?food.foodData.nutriments.fat_serving:""})
                     :null
-                response.data.product.nutriments["saturated-fat_100g"]
-                    ? nutrition.push({  id: "  G. Saturadas (" +  response.data.product.nutriments["saturated-fat_unit"] + ")", 
-                                        hundred: response.data.product.nutriments["saturated-fat_100g"],
-                                        serving: response.data.product.nutriments["saturated-fat_serving"]?response.data.product.nutriments["saturated-fat_serving"]:""})
+                food.foodData.nutriments["saturated-fat_100g"]
+                    ? nutrition.push({  id: "  G. Saturadas (" +  food.foodData.nutriments["saturated-fat_unit"] + ")", 
+                                        hundred: food.foodData.nutriments["saturated-fat_100g"],
+                                        serving: food.foodData.nutriments["saturated-fat_serving"]?food.foodData.nutriments["saturated-fat_serving"]:""})
                     :null
-                response.data.product.nutriments["monounsaturated-fat_100g"]
-                    ? nutrition.push({  id: "  G. Monoinsat. (" +  response.data.product.nutriments["monounsaturated-fat_unit"] + ")", 
-                                        hundred: response.data.product.nutriments["monounsaturated-fat_100g"],
-                                        serving: response.data.product.nutriments["monounsaturated-fat_serving"]?response.data.product.nutriments["monounsaturated-fat_serving"]:""})
+                food.foodData.nutriments["monounsaturated-fat_100g"]
+                    ? nutrition.push({  id: "  G. Monoinsat. (" +  food.foodData.nutriments["monounsaturated-fat_unit"] + ")", 
+                                        hundred: food.foodData.nutriments["monounsaturated-fat_100g"],
+                                        serving: food.foodData.nutriments["monounsaturated-fat_serving"]?food.foodData.nutriments["monounsaturated-fat_serving"]:""})
                     :null
-                response.data.product.nutriments["polyunsaturated-fat_100g"]
-                    ? nutrition.push({  id: "  G. Poliinsat. (" +  response.data.product.nutriments["polyunsaturated-fat_unit"] + ")", 
-                                        hundred: response.data.product.nutriments["polyunsaturated-fat_100g"],
-                                        serving: response.data.product.nutriments["polyunsaturated-fat_serving"]?response.data.product.nutriments["polyunsaturated-fat_serving"]:""})
+                food.foodData.nutriments["polyunsaturated-fat_100g"]
+                    ? nutrition.push({  id: "  G. Poliinsat. (" +  food.foodData.nutriments["polyunsaturated-fat_unit"] + ")", 
+                                        hundred: food.foodData.nutriments["polyunsaturated-fat_100g"],
+                                        serving: food.foodData.nutriments["polyunsaturated-fat_serving"]?food.foodData.nutriments["polyunsaturated-fat_serving"]:""})
                     :null
-                response.data.product.nutriments["trans-fat_100g"]
-                    ? nutrition.push({  id: "  G. Trans (" +  response.data.product.nutriments["trans-fat_unit"] + ")", 
-                                        hundred: response.data.product.nutriments["trans-fat_100g"],
-                                        serving: response.data.product.nutriments["trans-fat_serving"]?response.data.product.nutriments["trans-fat_serving"]:""})
+                food.foodData.nutriments["trans-fat_100g"]
+                    ? nutrition.push({  id: "  G. Trans (" +  food.foodData.nutriments["trans-fat_unit"] + ")", 
+                                        hundred: food.foodData.nutriments["trans-fat_100g"],
+                                        serving: food.foodData.nutriments["trans-fat_serving"]?food.foodData.nutriments["trans-fat_serving"]:""})
                     :null
-                response.data.product.nutriments["cholesterol_100g"]
-                    ? nutrition.push({  id: "Colesterol (" +  response.data.product.nutriments["cholesterol_unit"] + ")", 
-                                        hundred: response.data.product.nutriments["cholesterol_100g"],
-                                        serving: response.data.product.nutriments["cholesterol_serving"]?response.data.product.nutriments["cholesterol_serving"]:""})
+                food.foodData.nutriments["cholesterol_value"]
+                    ? nutrition.push({  id: "Colesterol (" +  food.foodData.nutriments["cholesterol_unit"] + ")", 
+                                        hundred: truncateToDecimalPlaces(food.foodData.nutriments["cholesterol_value"], 1),
+                                        serving: food.foodData.nutriments["cholesterol_serving"]?truncateToDecimalPlaces(food.foodData.nutriments["cholesterol_serving"]*1000,1):""})
                     :null
-                response.data.product.nutriments["carbohydrates_100g"]
-                    ? nutrition.push({  id: "H. de  C. Disp. (" +  response.data.product.nutriments["carbohydrates_unit"] + ")", 
-                                        hundred: response.data.product.nutriments["carbohydrates_100g"],
-                                        serving: response.data.product.nutriments["carbohydrates_serving"]?response.data.product.nutriments["carbohydrates_serving"]:""})
+                food.foodData.nutriments["carbohydrates_100g"]
+                    ? nutrition.push({  id: "H. de  C. Disp. (" +  food.foodData.nutriments["carbohydrates_unit"] + ")", 
+                                        hundred: food.foodData.nutriments["carbohydrates_100g"],
+                                        serving: food.foodData.nutriments["carbohydrates_serving"]?food.foodData.nutriments["carbohydrates_serving"]:""})
                     :null
-                response.data.product.nutriments["sugars_100g"]
-                    ? nutrition.push({  id: "  Azúcares totales (" +  response.data.product.nutriments["sugars_unit"] + ")", 
-                                        hundred: response.data.product.nutriments["sugars_100g"],
-                                        serving: response.data.product.nutriments["sugars_serving"]?response.data.product.nutriments["sugars_serving"]:""})
+                food.foodData.nutriments["sugars_100g"]
+                    ? nutrition.push({  id: "  Azúcares totales (" +  food.foodData.nutriments["sugars_unit"] + ")", 
+                                        hundred: food.foodData.nutriments["sugars_100g"],
+                                        serving: food.foodData.nutriments["sugars_serving"]?food.foodData.nutriments["sugars_serving"]:""})
                     :null
-                response.data.product.nutriments["salt_100g"]
-                    ? nutrition.push({  id: "Sodio (" +  response.data.product.nutriments["salt_unit"] + ")", 
-                                        hundred: response.data.product.nutriments["salt_100g"],
-                                        serving: response.data.product.nutriments["salt_serving"]?response.data.product.nutriments["salt_serving"]:""})
+                food.foodData.nutriments["salt_value"]
+                    ? nutrition.push({  id: "Sodio (" +  food.foodData.nutriments["salt_unit"] + ")", 
+                                        hundred: truncateToDecimalPlaces(food.foodData.nutriments["salt_value"], 1),
+                                        serving: food.foodData.nutriments["salt_serving"]?truncateToDecimalPlaces(food.foodData.nutriments["salt_serving"]*1000,1):""})
                     :null
                 setNutritionRows(nutrition)
             }
             
         })
-    },[id])      
+        .catch(error => {
+            if (error.response.status === 404){
+                return navigate("/food/" + id + "/edit?n=true")
+            }
+            else if (error.response.status>=500){
+                console.log("OpenFoodFacts está caído probablemente")
+            }
+        })
+        .finally(()=>{
+            setAllDone(true)
+            onReady()
+        })
+    },[])      
 
-    return ( 
+    useEffect(()=>{
+        if (firstTime!=""){
+            let neutralRating = {foodLocalId:firstTime, userId:window.localStorage.id, rating:"neutral"}
+            api.post(`${foodRatingsURL}`, 
+                neutralRating, 
+                {
+                    withCredentials: true,
+                    headers: {
+                        Authorization: "Bearer " + window.localStorage.token
+                    }
+                }
+            )
+            .then(res => {
+            })
+            .catch(error => {
+                console.log(error)
+            })
+        }
+        
+    }, [firstTime])
+
+    const onRatingChange = (food: FoodLocal, newRating : UserRatesFood) => {
+        let newLikes = food.likes
+        let newDislikes = food.dislikes
+        
+        if (newRating.rating==="likes") {
+            newLikes = food.userRatesFood?.rating==="neutral"
+                            ?food.likes+1
+                            :food.userRatesFood?.rating==="dislikes"
+                                ?food.likes+1
+                                :food.likes-1
+
+            newDislikes = food.userRatesFood?.rating==="dislikes"
+                                ?food.dislikes-1
+                                :food.dislikes
+        }
+        else if (newRating.rating === "dislikes"){
+            newLikes = food.userRatesFood?.rating==="likes"
+                            ?food.likes-1
+                            :food.likes
+
+            newDislikes = food.userRatesFood?.rating==="neutral"
+                            ?food.dislikes+1:
+                            food.userRatesFood?.rating==="likes"
+                                ?food.dislikes+1
+                                :food.dislikes-1
+        }
+
+        else if (newRating.rating === "neutral"){
+            newDislikes = food.userRatesFood?.rating==="dislikes"
+                            ?food.dislikes-1
+                            :food.dislikes
+            newLikes = food.userRatesFood?.rating==="likes"
+                            ?food.likes-1
+                            :food.likes
+        }
+        
+        
+        let newFood = {...food, userRatesFood: newRating, likes: newLikes, dislikes: newDislikes}
+        setFoodExternalSingle(newFood)
+    }
+
+    const handleScrollToComments = () => {
+        if (commentsRef.current) {
+            commentsRef.current.scrollIntoView({ behavior: 'smooth' });
+            setExpandedComments(true); // Expand the comments
+        }
+    };
+
+    return ( allDone?
         <>
-    
             <Grid container 
                 display="flex" 
                 flexDirection="column" 
@@ -494,7 +617,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible }
                 alignItems="center" 
                 sx={{width: "100vw", maxWidth:"500px", gap:"10px"}}
             >   
-                {foodFullName!== "" &&
+                {!!foodExternalSingle && foodFullName!== "" &&
                 <Box 
                 ref={containerRef}
                 sx={{
@@ -525,7 +648,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible }
                         position: "relative", // For positioning animation
                     }}
                     >
-                        <Typography variant='h5' 
+                        <Typography variant='h6' 
                         ref={textRef}
                         width="100%" 
                         sx={{pt:1, 
@@ -556,12 +679,14 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible }
                     </Box>   
                     <Box 
                     sx={{
-                        display: "flex", 
-                        flexDirection: "row", 
-                        width: "95%", 
-                        justifyContent: "space-between",
-                        alignItems: "center"}}>
-                        <FoodLike foodId={foodExternalSingle.id}></FoodLike>
+                    display: "flex", 
+                    flexDirection: "row", 
+                    width: "95%", 
+                    justifyContent: "space-between",
+                    alignItems: "center"}}>
+
+                        <FoodRate food={foodExternalSingle} onRatingChange={onRatingChange} ></FoodRate>
+                        <FoodCommentsCount id={id} onClick={handleScrollToComments} noneColor='grey' someColor='#c9c9c9'/>
                         <Button variant='text' onClick={()=>navigate("edit")} 
                         sx={{
                             padding:0.2, 
@@ -571,7 +696,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible }
                             justifyContent: "space-between",
                             height: "100%"
                         }}>
-                            <EditNoteRoundedIcon sx={{color: 'warning.main', height: "32px", width: "32px" }}/>
+                            <EditNoteRoundedIcon sx={{color: 'warning.main', fontSize: {sm: 25, xs: 20}}}/>
                             <Typography 
                             variant='subtitle1' 
                             color="warning.main" 
@@ -589,7 +714,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible }
                 }}> 
                     <Carousel navButtonsAlwaysVisible={true}>
                         {
-                            imageArr.map((image, i) => <Item key={i} item={image}/>)
+                            imageArr.map((image, i) => <div key={i}><ImageDisplay  image={image}/></div>)
                         }
                     </Carousel>
                 </Box>
@@ -627,11 +752,11 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible }
                         </IconButton>
                     </Paper>
                     
-                    {Scores([   "eco_score_" + foodExternalSingle.ecoscore_grade, 
-                                "nutri_score_" + foodExternalSingle.nutriscore_grade,
-                                "nova_score_" + foodExternalSingle.nova_group as string
+                    {Scores([   "eco_score_" + foodExternalSingle?.foodData?.ecoscore_grade, 
+                                "nutri_score_" + foodExternalSingle?.foodData?.nutriscore_grade,
+                                "nova_score_" + foodExternalSingle?.foodData?.nova_group as string
                             ])}
-                    {UserFoodPrefs(foodExternalSingle.allergens_tags as string[], foodExternalSingle.traces_tags as string[])}
+                    {UserFoodPrefs(foodExternalSingle?.foodData?.allergens_tags as string[], foodExternalSingle?.foodData?.traces_tags as string[])}
                 </Box>
                 
                 <Box
@@ -656,16 +781,16 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible }
                     <Paper elevation={0}>
                     <ul style={{ paddingLeft: 10 }}>
                         <Typography variant='subtitle1' color= "primary.dark">
-                            <li><span style={{fontWeight: "bold"}}>Nombre: </span>{foodExternalSingle.product_name}</li>
+                            <li><span style={{fontWeight: "bold"}}>Nombre: </span>{foodExternalSingle?.foodData?.product_name}</li>
                         </Typography>
                         <Typography variant='subtitle1' color= "primary.dark">
-                            <li><span style={{fontWeight: "bold"}}>Cantidad: </span>{foodExternalSingle.quantity?foodExternalSingle.quantity:"Desconocida"}</li>
+                            <li><span style={{fontWeight: "bold"}}>Cantidad: </span>{foodExternalSingle?.foodData?.quantity || "Desconocida"}</li>
                         </Typography>  
                         <Typography variant='subtitle1' color= "primary.dark">
-                            <li><span style={{fontWeight: "bold"}}>Marca: </span>{foodExternalSingle.brands?foodExternalSingle.brands:"Desconocida"}</li>
+                            <li><span style={{fontWeight: "bold"}}>Marca: </span>{foodExternalSingle?.foodData?.brands || "Desconocida"}</li>
                         </Typography>
                         <Typography variant='subtitle1' color= "primary.dark">
-                            <li><span style={{fontWeight: "bold"}}>Código: </span>{foodExternalSingle.id?foodExternalSingle.id:"Desconocido"}</li>
+                            <li><span style={{fontWeight: "bold"}}>Código: </span>{foodExternalSingle?.foodData?.id || "Desconocido"}</li>
                         </Typography>
                     </ul>
                     </Paper>
@@ -691,7 +816,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible }
                         Alérgenos
                         </Typography>
                     </Paper>
-                    {Allergens(foodExternalSingle.allergens_tags as string[], foodExternalSingle.traces_tags as string[])}
+                    {Allergens(foodExternalSingle?.foodData?.allergens_tags as string[], foodExternalSingle?.foodData?.traces_tags as string[])}
                 </Box>
 
                 <Box
@@ -713,7 +838,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible }
                         Aditivos
                         </Typography>
                     </Paper>
-                    {Additives(foodExternalSingle.additives as string[])}
+                    {Additives(foodExternalSingle?.foodData?.additives as string[])}
                 </Box>
 
                 <Box
@@ -745,7 +870,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible }
                             justifyContent: "center",
                             alignItems: "center"
                     }}>
-                        {Ingredients(foodExternalSingle.ingredients_text as string)}
+                        {Ingredients(foodExternalSingle?.foodData?.ingredients_text as string)}
                     </Box>
                     
                 </Box>
@@ -776,20 +901,28 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible }
                         pt: 1, 
                         pb: 1
                     }}>
-                        <Typography sx={{textIndent: 10}}>Porción: {foodExternalSingle.serving_size}</Typography>
-                        <Typography sx={{textIndent: 10}}>Porciones por envase: {foodExternalSingle.serving_quantity}</Typography>
+                        <Typography variant='subtitle1' sx={{textIndent: 10}}>Porción: {foodExternalSingle?.foodData?.serving_size}</Typography>
+                       
                     </Box>
                     {NutritionTable(nutritionRows)}
                 </Box>
+                
                 <Box
                 sx={{
-                    border: "5px solid",
-                    borderColor: "primary.main",
                     width:"90%",
                 }}
                 > 
-                    <FoodComments></FoodComments>
+                    <div ref={commentsRef}>
+                        <FoodComments expanded={expandedComments} toggleExpand={() => setExpandedComments(!expandedComments)}></FoodComments>
+                    </div>
                 </Box>
+
+                <Button variant="text" onClick={()=>navigate("history")} sx={{mb:8}}>
+                    <Typography variant='subtitle2'>
+                        Ver historial de ediciones
+                    </Typography>
+                </Button>
+                
                 <Backdrop open={showQuickLookInfo} onClick={handleQuickLookClose} sx={{width: "100%"}}>
                     <Dialog open={showQuickLookInfo} onClose={handleQuickLookClose} scroll='paper' 
                     sx={{width: "100%", 
@@ -914,6 +1047,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible }
             </Grid>
             
         </>
+        :null
     )
 };
 

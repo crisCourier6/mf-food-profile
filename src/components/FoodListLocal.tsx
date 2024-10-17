@@ -1,30 +1,23 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../api';
 import { FoodLocal } from '../interfaces/foodLocal';
-import { Box } from '@mui/material';
-import { DataGrid, GridColDef, GridEventListener } from "@mui/x-data-grid"
+import { Box, } from '@mui/material';
+import { DataGrid, GridColDef, GridEventListener, GridRenderCellParams } from "@mui/x-data-grid"
 import { useNavigate } from 'react-router-dom';
 import { esES } from '@mui/x-data-grid/locales';
-
-const componentBreaks = {
-    breakpoints: {
-        values: {
-          xs: 0,
-          sm: 600,
-          md: 900,
-          lg: 1200,
-          xl: 1536,
-        },
-      },
-}
+import FoodCommentsCount from './FoodCommentsCount';
+import FoodCommentList from './FoodCommentList';
 
 const FoodListLocal: React.FC = () => {
     const navigate = useNavigate()
     const [foodLocalList, setFoodLocalList] = useState<FoodLocal[] | null>()
-    console.log(window.localStorage.token)
+    const [showCommentsDialog, setShowCommentsDialog] = useState(false)
+    const [selectedFood, setSelectedFood] = useState<FoodLocal|null>(null)
+    const foodURL = "/food/local"
     useEffect(()=>{
-        axios.get("http://192.168.100.6:8080/food/local", {
+        document.title = "Lista local de alimentos - EyesFood";
+        api.get(foodURL, {
             withCredentials: true,
              headers: {
                  Authorization: "Bearer " + window.localStorage.token
@@ -37,8 +30,26 @@ const FoodListLocal: React.FC = () => {
     },[])      
     const columns: GridColDef[] = [
         {field: "id", headerName: "Código", flex: 1, headerClassName: "header-colors"},
-        {field: "name", headerName: "Nombre", flex: 1, headerClassName: "header-colors"},
-        
+        {field: "name", headerName: "Nombre", flex: 2, headerClassName: "header-colors"},
+        {
+            field: 'actions',
+            headerName: 'Acciones',
+            flex: 1,
+            headerClassName: "header-colors",
+            headerAlign: "center", 
+            type: "actions",
+            renderCell: (params: GridRenderCellParams) => (
+                <Box sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    gap: 1,
+                    height: '100%',
+                }}>
+                            <FoodCommentsCount id={params.row.id} onClick={()=>handleShowComments(params.row)} noneColor='lightgrey' someColor='primary.main'/>        
+                </Box>
+            )
+        }
     ]
 
     const handleRowClick: GridEventListener<'rowClick'> = (
@@ -49,14 +60,23 @@ const FoodListLocal: React.FC = () => {
         return navigate("/food/" + params.row.id)
       };
 
-    return ( 
+    const handleShowComments = (foodLocal:FoodLocal) => {
+        setSelectedFood(foodLocal)
+        setShowCommentsDialog(true)
+    }
+
+    const handleCloseComments = () => {
+        setShowCommentsDialog(false)
+    }
+
+    return ( <>
         <Box sx={{
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
             alignItems: "center",
             width:"90vw",
-            maxWidth: "600px",
+            maxWidth: "1000px",
             overflow: "auto",
             
           }}>
@@ -102,7 +122,10 @@ const FoodListLocal: React.FC = () => {
                     }}
                 />
                 :null}
+                <FoodCommentList foodLocal={selectedFood} show={showCommentsDialog} hide={handleCloseComments}/>
         </Box>
+        
+        </>
     )
 }
 

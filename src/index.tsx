@@ -8,6 +8,8 @@ import '@fontsource/righteous/400.css';
 declare module '@mui/material/Button' {
   interface ButtonPropsVariantOverrides {
     dashed: true;
+    dark:true;
+    inverted:true
   }
 }
 
