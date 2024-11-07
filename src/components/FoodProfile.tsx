@@ -465,63 +465,128 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                 
                 setImageArr(images)
 
-                const nutrition = []
-                food.foodData.nutriments["energy-kcal_100g"]
-                    ? nutrition.push({  id: "Energía (kcal)", 
-                                        hundred: food.foodData.nutriments["energy-kcal_100g"],
-                                        serving: food.foodData.nutriments["energy-kcal_serving"]?food.foodData.nutriments["energy-kcal_serving"]:""})
-                    :null
-                food.foodData.nutriments.proteins_100g
-                    ? nutrition.push({  id: "Proteínas (" +  food.foodData.nutriments.proteins_unit + ")", 
-                                        hundred: food.foodData.nutriments.proteins_100g,
-                                        serving: food.foodData.nutriments.proteins_serving?food.foodData.nutriments.proteins_serving:""})
-                    :null
-                food.foodData.nutriments.fat_100g
-                    ? nutrition.push({  id: "Grasas Totales (" +  food.foodData.nutriments.fat_unit + ")", 
-                                        hundred: food.foodData.nutriments.fat_100g,
-                                        serving: food.foodData.nutriments.fat_serving?food.foodData.nutriments.fat_serving:""})
-                    :null
-                food.foodData.nutriments["saturated-fat_100g"]
-                    ? nutrition.push({  id: "  G. Saturadas (" +  food.foodData.nutriments["saturated-fat_unit"] + ")", 
-                                        hundred: food.foodData.nutriments["saturated-fat_100g"],
-                                        serving: food.foodData.nutriments["saturated-fat_serving"]?food.foodData.nutriments["saturated-fat_serving"]:""})
-                    :null
-                food.foodData.nutriments["monounsaturated-fat_100g"]
-                    ? nutrition.push({  id: "  G. Monoinsat. (" +  food.foodData.nutriments["monounsaturated-fat_unit"] + ")", 
-                                        hundred: food.foodData.nutriments["monounsaturated-fat_100g"],
-                                        serving: food.foodData.nutriments["monounsaturated-fat_serving"]?food.foodData.nutriments["monounsaturated-fat_serving"]:""})
-                    :null
-                food.foodData.nutriments["polyunsaturated-fat_100g"]
-                    ? nutrition.push({  id: "  G. Poliinsat. (" +  food.foodData.nutriments["polyunsaturated-fat_unit"] + ")", 
-                                        hundred: food.foodData.nutriments["polyunsaturated-fat_100g"],
-                                        serving: food.foodData.nutriments["polyunsaturated-fat_serving"]?food.foodData.nutriments["polyunsaturated-fat_serving"]:""})
-                    :null
-                food.foodData.nutriments["trans-fat_100g"]
-                    ? nutrition.push({  id: "  G. Trans (" +  food.foodData.nutriments["trans-fat_unit"] + ")", 
-                                        hundred: food.foodData.nutriments["trans-fat_100g"],
-                                        serving: food.foodData.nutriments["trans-fat_serving"]?food.foodData.nutriments["trans-fat_serving"]:""})
-                    :null
-                food.foodData.nutriments["cholesterol_value"]
-                    ? nutrition.push({  id: "Colesterol (" +  food.foodData.nutriments["cholesterol_unit"] + ")", 
-                                        hundred: truncateToDecimalPlaces(food.foodData.nutriments["cholesterol_value"], 1),
-                                        serving: food.foodData.nutriments["cholesterol_serving"]?truncateToDecimalPlaces(food.foodData.nutriments["cholesterol_serving"]*1000,1):""})
-                    :null
-                food.foodData.nutriments["carbohydrates_100g"]
-                    ? nutrition.push({  id: "H. de  C. Disp. (" +  food.foodData.nutriments["carbohydrates_unit"] + ")", 
-                                        hundred: food.foodData.nutriments["carbohydrates_100g"],
-                                        serving: food.foodData.nutriments["carbohydrates_serving"]?food.foodData.nutriments["carbohydrates_serving"]:""})
-                    :null
-                food.foodData.nutriments["sugars_100g"]
-                    ? nutrition.push({  id: "  Azúcares totales (" +  food.foodData.nutriments["sugars_unit"] + ")", 
-                                        hundred: food.foodData.nutriments["sugars_100g"],
-                                        serving: food.foodData.nutriments["sugars_serving"]?food.foodData.nutriments["sugars_serving"]:""})
-                    :null
-                food.foodData.nutriments["salt_value"]
-                    ? nutrition.push({  id: "Sodio (" +  food.foodData.nutriments["salt_unit"] + ")", 
-                                        hundred: truncateToDecimalPlaces(food.foodData.nutriments["salt_value"], 1),
-                                        serving: food.foodData.nutriments["salt_serving"]?truncateToDecimalPlaces(food.foodData.nutriments["salt_serving"]*1000,1):""})
-                    :null
+                const { nutriments } = food.foodData;
+                const nutrition:NutritionValues[] = []
+                const pushNutrition = (id:string, hundred:any, serving:any) => {
+                    nutrition.push({
+                        id,
+                        hundred: hundred !== undefined ? hundred : "",
+                        serving: serving !== undefined ? serving : ""
+                    });
+                };
+
+
+                if (nutriments.hasOwnProperty("energy-kcal_100g")) {
+                    pushNutrition(
+                        "Energía (kcal)",
+                        nutriments["energy-kcal_100g"].toFixed(1),
+                        nutriments["energy-kcal_serving"].toFixed(1) 
+                    );
+                }
+
+
+                if (nutriments.hasOwnProperty("proteins_100g")) {
+                    pushNutrition(
+                        `Proteínas (${nutriments.proteins_unit})`,
+                        nutriments.proteins_100g.toFixed(1),
+                        nutriments.proteins_serving?.toFixed(1)
+                    );
+                }
+
+
+                if (nutriments.hasOwnProperty("fat_100g")) {
+                    pushNutrition(
+                        `Grasas Totales (${nutriments.fat_unit})`,
+                        nutriments.fat_100g.toFixed(1),
+                        nutriments.fat_serving?.toFixed(1) 
+                    );
+                }
+
+
+                if (nutriments.hasOwnProperty("saturated-fat_100g")) {
+                    pushNutrition(
+                        `G. Saturadas (${nutriments["saturated-fat_unit"]})`,
+                        nutriments["saturated-fat_100g"].toFixed(1),
+                        nutriments["saturated-fat_serving"]?.toFixed(1)
+                    );
+                }
+
+
+                if (nutriments.hasOwnProperty("monounsaturated-fat_100g")) {
+                    pushNutrition(
+                        `G. Monoinsat. (${nutriments["monounsaturated-fat_unit"]})`,
+                        nutriments["monounsaturated-fat_100g"].toFixed(1),
+                        nutriments["monounsaturated-fat_serving"]?.toFixed(1) 
+                    );
+                }
+
+
+                if (nutriments.hasOwnProperty("polyunsaturated-fat_100g")) {
+                    pushNutrition(
+                        `G. Poliinsat. (${nutriments["polyunsaturated-fat_unit"]})`,
+                        nutriments["polyunsaturated-fat_100g"].toFixed(1),
+                        nutriments["polyunsaturated-fat_serving"]?.toFixed(1)
+                    );
+                }
+
+
+                if (nutriments.hasOwnProperty("trans-fat_100g")) {
+                    pushNutrition(
+                        `G. Trans (${nutriments["trans-fat_unit"]})`,
+                        nutriments["trans-fat_100g"].toFixed(1),
+                        nutriments["trans-fat_serving"]?.toFixed(1)
+                    );
+                }
+
+
+                if (nutriments.hasOwnProperty("cholesterol_value")) {
+                    let cholesterol_value =  truncateToDecimalPlaces(nutriments["cholesterol_100g"], 1)
+                    let cholesterol_serving = truncateToDecimalPlaces(nutriments["cholesterol_serving"], 1)
+                    if (nutriments["cholesterol_unit"]==="mg"){
+                        cholesterol_value = truncateToDecimalPlaces(nutriments["cholesterol_100g"] * 1000, 1)
+                        cholesterol_serving = truncateToDecimalPlaces(nutriments["cholesterol_serving"] * 1000, 1)
+                    }
+                    pushNutrition(
+                        `Colesterol (${nutriments["cholesterol_unit"]})`,
+                        cholesterol_value,
+                        cholesterol_serving
+                    );
+                }
+
+
+                if (nutriments.hasOwnProperty("carbohydrates_100g")) {
+                    pushNutrition(
+                        `H. de C. Disp. (${nutriments["carbohydrates_unit"]})`,
+                        nutriments["carbohydrates_100g"].toFixed(1),
+                        nutriments["carbohydrates_serving"]?.toFixed(1) 
+                    );
+                }
+
+
+                if (nutriments.hasOwnProperty("sugars_100g")) {
+                    pushNutrition(
+                        `Azúcares totales (${nutriments["sugars_unit"]})`,
+                        nutriments["sugars_100g"].toFixed(1),
+                        nutriments["sugars_serving"]?.toFixed(1) 
+                    );
+                }
+
+
+                if (nutriments.hasOwnProperty("sodium_100g")) {
+                    let sodium_value =  truncateToDecimalPlaces(nutriments["sodium_100g"], 1)
+                    let sodium_serving = truncateToDecimalPlaces(nutriments["sodium_serving"], 1)
+                    if (nutriments["sodium_unit"]==="mg"){
+                        sodium_value = truncateToDecimalPlaces(nutriments["sodium_100g"] * 1000, 1)
+                        sodium_serving = truncateToDecimalPlaces(nutriments["sodium_serving"] * 1000, 1)
+                    }
+                    pushNutrition(
+                        `Sodio (${nutriments["sodium_unit"]})`,
+                        sodium_value,
+                        sodium_serving
+                    );
+                }
                 setNutritionRows(nutrition)
+
             }
             
         })

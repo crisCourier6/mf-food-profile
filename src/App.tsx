@@ -7,7 +7,7 @@ import FoodProfile from "./components/FoodProfile";
 function App() {
   return (
     <div className="App">
-      <Router>
+      <Router basename="/mf-food-profile">
           <Routes>
               <Route path="/:id" element={<FoodProfile />}/>
           </Routes>
