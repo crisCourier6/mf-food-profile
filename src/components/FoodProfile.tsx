@@ -480,7 +480,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                     pushNutrition(
                         "Energía (kcal)",
                         nutriments["energy-kcal_100g"].toFixed(1),
-                        nutriments["energy-kcal_serving"].toFixed(1) 
+                        nutriments["energy-kcal_serving"]?.toFixed(1) 
                     );
                 }
 
