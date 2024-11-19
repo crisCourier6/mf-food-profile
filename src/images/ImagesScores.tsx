@@ -10,8 +10,10 @@ import eco_score_b from "../../public/eco_score/b.png"
 import eco_score_c from "../../public/eco_score/c.png"
 import eco_score_d from "../../public/eco_score/d.png"
 import eco_score_e from "../../public/eco_score/e.png"
+import eco_score_f from "../../public/eco_score/f.png"
 import eco_score_undefined from "../../public/eco_score/undefined.png"
 import eco_score_unknown from "../../public/eco_score/unknown.png"
+import eco_score_not_applicable from "../../public/eco_score/not-applicable.png"
 import nova_score_1 from "../../public/nova_score/1.png"
 import nova_score_2 from "../../public/nova_score/2.png"
 import nova_score_3 from "../../public/nova_score/3.png"
@@ -32,8 +34,10 @@ const ImagesScores: {[key: string]: any} = {
     "eco_score_c": eco_score_c,
     "eco_score_d": eco_score_d,
     "eco_score_e": eco_score_e,
+    "eco_score_f": eco_score_f,
     "eco_score_undefined": eco_score_undefined,
     "eco_score_unknown": eco_score_unknown,
+    "eco_score_not-applicable": eco_score_not_applicable,
     "nova_score_1": nova_score_1,
     "nova_score_2": nova_score_2,
     "nova_score_3": nova_score_3,

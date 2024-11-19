@@ -452,7 +452,7 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
                         ))}
                         </Select>
 
-                        <InputLabel id="demo-multiple-chip-label">No contiene</InputLabel>
+                        <InputLabel id="demo-multiple-chip-label">No debe contener</InputLabel>
                         <Select
                         labelId="demo-multiple-chip-label"
                         id="demo-multiple-chip"
@@ -536,7 +536,7 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
                         
                     </DialogActions>
                 </Dialog>
-            
+            {foodsFiltered.length > 0 && <Typography variant='subtitle2'>{foodsFiltered.length} resultados</Typography>}
             { foodsFiltered.map((food)=>{
                 return (
                 <Card key={food.id} sx={{
