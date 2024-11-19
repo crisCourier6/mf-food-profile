@@ -7,7 +7,7 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
         mode: "development",
         devServer: {
           port: 4003, // Modificar
-          host: "192.168.100.6",
+          host: "0.0.0.0",
           allowedHosts: 'all',
           historyApiFallback: true, // Necesario para que funcione React Router
           client: {

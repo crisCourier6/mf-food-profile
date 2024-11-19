@@ -471,7 +471,6 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                 setImageArr(images)
 
                 const { nutriments } = food.foodData;
-                console.log(nutriments)
                 const nutrition:NutritionValues[] = []
                 const pushNutrition = (id:string, hundred:any, serving:any) => {
                     nutrition.push({
@@ -481,13 +480,15 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                     });
                 };
 
+
                 if (nutriments.hasOwnProperty("energy-kcal_100g")) {
                     pushNutrition(
-                        "Energía (kcal)", 
+                        "Energía (kcal)",
                         nutriments["energy-kcal_100g"].toFixed(1),
-                        nutriments["energy-kcal_serving"]?.toFixed(1)
+                        nutriments["energy-kcal_serving"]?.toFixed(1) 
                     );
                 }
+
 
                 if (nutriments.hasOwnProperty("proteins_100g")) {
                     pushNutrition(
@@ -497,13 +498,15 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                     );
                 }
 
+
                 if (nutriments.hasOwnProperty("fat_100g")) {
                     pushNutrition(
                         `Grasas Totales (${nutriments.fat_unit})`,
                         nutriments.fat_100g.toFixed(1),
-                        nutriments.fat_serving?.toFixed(1)
+                        nutriments.fat_serving?.toFixed(1) 
                     );
                 }
+
 
                 if (nutriments.hasOwnProperty("saturated-fat_100g")) {
                     pushNutrition(
@@ -513,13 +516,15 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                     );
                 }
 
+
                 if (nutriments.hasOwnProperty("monounsaturated-fat_100g")) {
                     pushNutrition(
                         `G. Monoinsat. (${nutriments["monounsaturated-fat_unit"]})`,
                         nutriments["monounsaturated-fat_100g"].toFixed(1),
-                        nutriments["monounsaturated-fat_serving"]?.toFixed(1)
+                        nutriments["monounsaturated-fat_serving"]?.toFixed(1) 
                     );
                 }
+
 
                 if (nutriments.hasOwnProperty("polyunsaturated-fat_100g")) {
                     pushNutrition(
@@ -529,6 +534,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                     );
                 }
 
+
                 if (nutriments.hasOwnProperty("trans-fat_100g")) {
                     pushNutrition(
                         `G. Trans (${nutriments["trans-fat_unit"]})`,
@@ -536,6 +542,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                         nutriments["trans-fat_serving"]?.toFixed(1)
                     );
                 }
+
 
                 if (nutriments.hasOwnProperty("cholesterol_value")) {
                     let cholesterol_value =  truncateToDecimalPlaces(nutriments["cholesterol_100g"], 1)
@@ -551,21 +558,24 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                     );
                 }
 
+
                 if (nutriments.hasOwnProperty("carbohydrates_100g")) {
                     pushNutrition(
                         `H. de C. Disp. (${nutriments["carbohydrates_unit"]})`,
                         nutriments["carbohydrates_100g"].toFixed(1),
-                        nutriments["carbohydrates_serving"]?.toFixed(1)
+                        nutriments["carbohydrates_serving"]?.toFixed(1) 
                     );
                 }
+
 
                 if (nutriments.hasOwnProperty("sugars_100g")) {
                     pushNutrition(
                         `Azúcares totales (${nutriments["sugars_unit"]})`,
                         nutriments["sugars_100g"].toFixed(1),
-                        nutriments["sugars_serving"]?.toFixed(1)
+                        nutriments["sugars_serving"]?.toFixed(1) 
                     );
                 }
+
 
                 if (nutriments.hasOwnProperty("sodium_100g")) {
                     let sodium_value =  truncateToDecimalPlaces(nutriments["sodium_100g"], 1)
@@ -581,6 +591,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                     );
                 }
                 setNutritionRows(nutrition)
+
             }
             
         })
