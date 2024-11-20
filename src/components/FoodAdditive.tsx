@@ -1,23 +1,12 @@
-import React from 'react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, Paper, Typography, Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
 import "./Components.css"
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-
-type accordionItemsType = {
-    name:string,
-    description:string,
-    link:string
-}
 
 const FoodAdditive: React.FC<{additives:string[]}> = (props) => {
     const textLength = 450
     const [expanded, setExpanded] = useState<number|false>(false)
     const [isFullText, setIsFullText] = useState<Record<number, boolean>>({});
-
-    const expandDescription = (panel:any) => (event:any, isExpanded:boolean) => {
-        setExpanded(isExpanded?panel:null)
-    }
 
     const shrinkDescription = (text:string, maxLength:number) => {
         if (text.length <= maxLength) return text

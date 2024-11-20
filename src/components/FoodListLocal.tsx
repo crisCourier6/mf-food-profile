@@ -1,5 +1,4 @@
-import React from 'react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import api from '../api';
 import { FoodLocal } from '../interfaces/foodLocal';
 import { Box, } from '@mui/material';

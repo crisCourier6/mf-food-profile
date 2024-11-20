@@ -1,5 +1,4 @@
-import React, { useRef } from 'react';
-import { useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import api from '../api';
 import { FoodLocal } from '../interfaces/foodLocal';
 import { useNavigate, useParams } from "react-router-dom"
@@ -20,7 +19,6 @@ import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
 import FoodRate from './FoodRate';
 import { UserRatesFood } from '../interfaces/userRatesFood';
 import FoodCommentsCount from './FoodCommentsCount';
-import Loading from './Loading';
 
 type NutritionValues = {
     id: string,

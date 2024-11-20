@@ -1,5 +1,4 @@
-import React from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import api from '../api';
 import { Box, IconButton, Typography } from '@mui/material';
 import { UserRatesFood } from '../interfaces/userRatesFood';

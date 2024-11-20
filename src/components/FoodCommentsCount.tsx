@@ -1,5 +1,4 @@
-import React from 'react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import api from '../api';
 import { Box, IconButton, Typography, CircularProgress, } from '@mui/material';
 import CommentRoundedIcon from '@mui/icons-material/CommentRounded';

@@ -1,5 +1,4 @@
-import React, { useRef } from 'react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import api from '../api';
 import { useParams } from "react-router-dom"
 import { Box, Button, IconButton, Paper, Typography, Dialog, DialogTitle, DialogContent, TextField, DialogActions } from '@mui/material';
@@ -14,7 +13,6 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
     const currentUserId = window.localStorage.getItem("id")
     const [comments, setComments] = useState<UserCommentsFood[]>([])
     const commentsURL = "/comments-food"
-    const commentsRef = useRef<HTMLDivElement>(null);
     const [selectedComment, setSelectedComment] = useState<UserCommentsFood | null>(null);
     const [selectedCommentParent, setSelectedCommentParent] = useState<UserCommentsFood | null>(null);
     const [editedContent, setEditedContent] = useState("");

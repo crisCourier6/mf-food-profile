@@ -1,5 +1,4 @@
-import React from 'react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import api from '../api';
 import { Box, Button, IconButton, Paper,Typography, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import { UserCommentsFood } from '../interfaces/UserCommentsFood';
@@ -10,7 +9,6 @@ import { FoodLocal } from '../interfaces/foodLocal';
 import dayjs from 'dayjs';
 
 const FoodCommentList: React.FC<{ foodLocal:FoodLocal|null, show:boolean, hide:()=>void }> = ({ foodLocal, show, hide }) => {
-    const currentUserId = window.localStorage.getItem("id")
     const [comments, setComments] = useState<UserCommentsFood[]>([])
     const commentsURL = "/comments-food"
     const [selectedComment, setSelectedComment] = useState<UserCommentsFood | null>(null);

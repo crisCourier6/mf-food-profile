@@ -1,14 +1,12 @@
-import React from 'react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import api from '../api';
 import { FoodLocal } from '../interfaces/foodLocal';
 import { UserRatesFood } from '../interfaces/userRatesFood';
 import { Box, Card, CardContent, CardMedia, Grid, IconButton, Typography, Alert, Button, 
     Dialog, DialogActions, DialogContent, InputAdornment, TextField, Snackbar, SnackbarCloseReason, 
-    InputLabel, Select, OutlinedInput, Chip, MenuItem, DialogTitle } from '@mui/material';
+    InputLabel, Select, OutlinedInput, Chip, MenuItem, DialogTitle, CircularProgress } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import NoPhoto from "../../public/no-photo.png"
-import { CircularProgress } from "@mui/material";
 import ClearIcon from '@mui/icons-material/Clear'; // Import the clear icon
 import FoodRate from './FoodRate';
 import ImagesScores from '../images/ImagesScores';
@@ -25,14 +23,12 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
     const allergensURL = "/food/allergens"
     const [allergensAll, setAllergensAll] = useState<Allergen[]>([])
     const [foods, setFoods] = useState<FoodLocal[]>([])
-    const [selectedFood, setSelectedFood] = useState<FoodLocal|null>(null)
     const [foodsFiltered, setFoodsFiltered] = useState<FoodLocal[]>([])
     const [searchQuery, setSearchQuery] = useState("");
     const [codeQuery, setCodeQuery] = useState("")
     const [lacksAllergens, setLacksAllergens] = useState<Allergen[]>([])
     const [containsAllergens, setContainsAllergens] = useState<Allergen[]>([])
     const [filter, setFilter] = useState("all")
-    const [showDeleteDialog, setShowDeleteDialog] = useState(false)
     const [successOpen, setSuccessOpen] = useState(false)
     const [allDone, setAllDone] = useState(false)
 
@@ -122,20 +118,20 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
         }, 100); // Adjust the delay as needed
     }, [foodsFiltered])
 
-    const handleFilterChange = (event: React.MouseEvent<HTMLElement>, newFilter:string) => {
-        if (newFilter === null) {
-            return;
-          }
-        setFilter(newFilter);
+    // const handleFilterChange = (event: React.MouseEvent<HTMLElement>, newFilter:string) => {
+    //     if (newFilter === null) {
+    //         return;
+    //       }
+    //     setFilter(newFilter);
     
-        // Filter data based on the selected value
-        if (newFilter === 'all') {
-            setFoodsFiltered(foods);
-        } 
-        else {
-            setFoodsFiltered(foods.filter(item => item.userRatesFood?.rating === newFilter));
-        }
-    };
+    //     // Filter data based on the selected value
+    //     if (newFilter === 'all') {
+    //         setFoodsFiltered(foods);
+    //     } 
+    //     else {
+    //         setFoodsFiltered(foods.filter(item => item.userRatesFood?.rating === newFilter));
+    //     }
+    // };
 
     const handleSearch = () => {
         let queryParams = new URLSearchParams(location.search);
@@ -254,11 +250,6 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
             }
         }
         
-    }
-
-    const handleDeleteDialog = (food:FoodLocal) => {
-        setSelectedFood(food)
-        setShowDeleteDialog(true)
     }
 
     const handleContainsAllergensChange = (event:any) => {
