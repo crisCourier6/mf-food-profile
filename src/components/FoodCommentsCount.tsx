@@ -6,6 +6,7 @@ import CommentRoundedIcon from '@mui/icons-material/CommentRounded';
 const FoodCommentsCount: React.FC<{id:string | undefined, onClick: () => void, noneColor: string, someColor:string}> = ({id, onClick, noneColor, someColor}) => {
     const [commentsCount, setCommentsCount] = useState(0)
     const commentsURL = "/comments-food"
+    const token = window.sessionStorage.getItem("token") || window.localStorage.getItem("token")
     const [allDone, setAllDone] = useState(false)
     
     useEffect(() => {
@@ -14,7 +15,7 @@ const FoodCommentsCount: React.FC<{id:string | undefined, onClick: () => void, n
             api.get(`${commentsURL}${queryParams}`, {
                 withCredentials: true,
                 headers: {
-                    Authorization: "Bearer " + window.localStorage.token
+                    Authorization: "Bearer " + token
                 }
             })
             .then(res => {

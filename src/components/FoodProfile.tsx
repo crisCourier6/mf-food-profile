@@ -281,7 +281,11 @@ function Scores(scores:string[]){
 }
 
 function UserFoodPrefs(foodAllergens:string[], foodTraces: string[]){
-    const userFoodPrefs:string[] = window.localStorage["food-prefs"].split(",")
+    const foodPrefs =  window.sessionStorage.getItem("food-prefs") || window.localStorage.getItem("food-prefs")
+    let userFoodPrefs:string[] = []
+    if (foodPrefs){
+        userFoodPrefs = foodPrefs.split(",")
+    }
     if ((!foodAllergens || foodAllergens.length == 0 || foodAllergens.includes("en:none")) && (!foodTraces || foodTraces.length == 0)){
         return (<></>)
     }
@@ -351,6 +355,8 @@ function truncateToDecimalPlaces(num:number, decimalPlaces:number) {
 }
       
 const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({ isAppBarVisible, onReady }) => {
+    const token = window.sessionStorage.getItem("token") || window.localStorage.getItem("token")
+    const currentUserId = window.sessionStorage.getItem("id") || window.localStorage.getItem("id")
     const [foodExternalSingle, setFoodExternalSingle] = useState<FoodLocal|null>(null)
     const [foodFullName, setFoodFullName] = useState<string>("")
     const [firstTime, setFirstTime] = useState("")
@@ -365,7 +371,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
     const containerRef = useRef<HTMLDivElement>(null);
     const foodRatingsURL = "/food/ratings"
     const foodURL = "/food/external"
-    const queryParams = `?wr=true&u=${window.localStorage.id}`
+    const queryParams = `?wr=true&u=${currentUserId}`
     const [allDone, setAllDone] = useState(false)
     const { id } = useParams()
     const navigate = useNavigate()
@@ -409,7 +415,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
         api.get(`${foodURL}/${id}${queryParams}`, {
             withCredentials: true,
              headers: {
-                 Authorization: "Bearer " + window.localStorage.token
+                 Authorization: "Bearer " + token
              }
         })
         .then((response)=>{
@@ -426,7 +432,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                 }
                 else{
                     setFirstTime(response.data.id)
-                     newUserRatesFood = {userId: window.localStorage.id, foodLocalId: response.data.id, rating: "neutral"}
+                     newUserRatesFood = {userId: currentUserId, foodLocalId: response.data.id, rating: "neutral"}
                 }
                 let food = {...response.data, userRatesFood: newUserRatesFood}
                 setFoodExternalSingle(food)
@@ -609,13 +615,13 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
 
     useEffect(()=>{
         if (firstTime!=""){
-            let neutralRating = {foodLocalId:firstTime, userId:window.localStorage.id, rating:"neutral"}
+            let neutralRating = {foodLocalId:firstTime, userId:currentUserId, rating:"neutral"}
             api.post(`${foodRatingsURL}`, 
                 neutralRating, 
                 {
                     withCredentials: true,
                     headers: {
-                        Authorization: "Bearer " + window.localStorage.token
+                        Authorization: "Bearer " + token
                     }
                 }
             )

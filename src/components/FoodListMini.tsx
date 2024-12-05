@@ -14,6 +14,7 @@ import FoodCommentsCount from './FoodCommentsCount';
 const FoodListMini: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible }) => {
     const navigate = useNavigate()
     const { id } = useParams()
+    const token = window.sessionStorage.getItem("token") || window.localStorage.getItem("token")
     const getFoodLocalURL = "/food/local"
     const foodRatingsURL = "/food/ratings"
     const [foods, setFoods] = useState<FoodLocal[]>([])
@@ -31,7 +32,7 @@ const FoodListMini: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible 
                 {
                     withCredentials: true,
                     headers: {
-                        Authorization: "Bearer " + window.localStorage.token
+                        Authorization: "Bearer " + token
                     }
                 }) 
                 .then( res => {
@@ -102,7 +103,7 @@ const FoodListMini: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible 
         api.delete(`${foodRatingsURL}/byuserandfood/${selectedFood?.userRatesFood?.userId}/${selectedFood?.userRatesFood?.foodLocalId}`, {
             withCredentials: true,
             headers: {
-                Authorization: "Bearer " + window.localStorage.token
+                Authorization: "Bearer " + token
             }
         })
         .then(res => {

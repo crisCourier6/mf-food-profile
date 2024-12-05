@@ -10,7 +10,8 @@ import dayjs from 'dayjs';
 
 const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = ({ expanded, toggleExpand }) => {
     const { id } = useParams()
-    const currentUserId = window.localStorage.getItem("id")
+    const currentUserId = window.sessionStorage.getItem("id") || window.localStorage.getItem("id")
+    const token = window.sessionStorage.getItem("token") || window.localStorage.getItem("token")
     const [comments, setComments] = useState<UserCommentsFood[]>([])
     const commentsURL = "/comments-food"
     const [selectedComment, setSelectedComment] = useState<UserCommentsFood | null>(null);
@@ -28,7 +29,7 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
             {
                 withCredentials: true,
                  headers: {
-                     Authorization: "Bearer " + window.localStorage.token
+                     Authorization: "Bearer " + token
                  }
             }
         )
@@ -131,7 +132,7 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
 
             api.patch(`${commentsURL}/${selectedComment.id}`, updatedComment, {
                 withCredentials: true,
-                headers: { Authorization: "Bearer " + window.localStorage.token },
+                headers: { Authorization: "Bearer " + token },
             })
                 .then(res => {
                     updateComment(updatedComment)
@@ -152,7 +153,7 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
             api.delete(`${commentsURL}/${selectedComment.id}`, 
                 {
                 withCredentials: true,
-                headers: { Authorization: "Bearer " + window.localStorage.token },
+                headers: { Authorization: "Bearer " + token },
                 }
             )
             .then(res => {
@@ -193,7 +194,7 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
         api.post(commentsURL, newComment, {
             withCredentials: true,
             headers: {
-                Authorization: "Bearer " + window.localStorage.token
+                Authorization: "Bearer " + token
             }
         }).then(res => {
             console.log(res);

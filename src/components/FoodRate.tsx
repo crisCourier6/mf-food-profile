@@ -15,6 +15,8 @@ interface FoodRateProps {
 
 const FoodRate: React.FC<FoodRateProps> = (props) => {
     const [isUpdating, setIsUpdating] = useState(false)
+    const token = window.sessionStorage.getItem("token") || window.localStorage.getItem("token")
+    const currentUserId = window.sessionStorage.getItem("id") || window.localStorage.getItem("id")
     const foodRatingsURL = "/food/ratings"
 
     const handleLike = (likedFood: FoodLocal) => {
@@ -29,7 +31,7 @@ const FoodRate: React.FC<FoodRateProps> = (props) => {
         }
         else{
             newRating = {
-                userId:window.localStorage.id, 
+                userId:currentUserId, 
                 foodLocalId:likedFood?.id, 
                 rating: "likes"
             }
@@ -37,7 +39,7 @@ const FoodRate: React.FC<FoodRateProps> = (props) => {
         api.post(foodRatingsURL, 
             newRating, {withCredentials: true, 
             headers: {
-                Authorization: "Bearer " + window.localStorage.token
+                Authorization: "Bearer " + token
             }
         })
         .then(res => {
@@ -66,7 +68,7 @@ const FoodRate: React.FC<FoodRateProps> = (props) => {
         }
         else{
             newRating = {
-                userId:window.localStorage.id, 
+                userId:currentUserId, 
                 foodLocalId:dislikedFood?.id, 
                 rating: "dislikes"
             }
@@ -74,7 +76,7 @@ const FoodRate: React.FC<FoodRateProps> = (props) => {
         api.post(foodRatingsURL, 
             newRating, {withCredentials: true, 
             headers: {
-                Authorization: "Bearer " + window.localStorage.token
+                Authorization: "Bearer " + token
             }
         })
         .then(res => {

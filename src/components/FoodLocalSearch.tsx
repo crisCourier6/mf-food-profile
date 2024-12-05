@@ -17,7 +17,9 @@ type Allergen = { id: string; name: string};
 const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible }) => {
     const navigate = useNavigate()
     const location = useLocation();
-    const currentUserId = window.localStorage.id
+    const token = window.sessionStorage.getItem("token") || window.localStorage.getItem("token")
+    const currentUserId = window.sessionStorage.getItem("id") || window.localStorage.getItem("id")
+    const userFoodPrefs = window.sessionStorage.getItem("food-prefs") || window.localStorage.getItem("food-prefs")
     const [openDialog, setOpenDialog] = useState(false);
     const getFoodLocalURL = "/food/local"
     const allergensURL = "/food/allergens"
@@ -25,6 +27,7 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
     const [foods, setFoods] = useState<FoodLocal[]>([])
     const [foodsFiltered, setFoodsFiltered] = useState<FoodLocal[]>([])
     const [searchQuery, setSearchQuery] = useState("");
+    const [isSearching, setIsSearching] = useState(false)
     const [codeQuery, setCodeQuery] = useState("")
     const [lacksAllergens, setLacksAllergens] = useState<Allergen[]>([])
     const [containsAllergens, setContainsAllergens] = useState<Allergen[]>([])
@@ -37,7 +40,7 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
         api.get(allergensURL, {
             withCredentials: true,
             headers: {
-                Authorization: "Bearer " + window.localStorage.token
+                Authorization: "Bearer " + token
             }
         })
         .then(response => {
@@ -50,6 +53,7 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
     }, [])
 
     useEffect(()=>{
+        setIsSearching(true)
         let searchParams = new URLSearchParams(location.search);
         const search = searchParams.get('search') || "";
         const la = searchParams.get('la') || "";
@@ -73,7 +77,7 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
             api.get(`${getFoodLocalURL}?${searchParams.toString()}`, {
                 withCredentials: true,
                 headers: {
-                    Authorization: "Bearer " + window.localStorage.token
+                    Authorization: "Bearer " + token
                 }
             })
             .then(res => {
@@ -88,12 +92,14 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
             })
             .finally(()=>{    
                 setAllDone(true)
+                setIsSearching(false)
             })
         }
         else {
             // If no parameters, reset foods to empty or a default state
             setFoods([]);
             setAllDone(true); // Set to true if you want to indicate loading is complete
+            setIsSearching(false)
         }
             
   
@@ -136,7 +142,9 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
     const handleSearch = () => {
         let queryParams = new URLSearchParams(location.search);
         queryParams.set("wr", "true")
-        queryParams.set("wu", currentUserId)
+        if (currentUserId){
+            queryParams.set("wu", currentUserId)
+        }
         
         if (searchQuery!=""){
             queryParams.set('search', searchQuery);
@@ -271,7 +279,7 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
     }
 
     const handleFillUserPrefs = () => {
-        let userFoodPrefs = window.localStorage.getItem("food-prefs")
+
         if (userFoodPrefs){
             let foodPrefsArray = userFoodPrefs.split(",")
             const matchingAllergens = allergensAll.filter(allergen => 
@@ -388,7 +396,7 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
                     Filtros
                 </Button>
             </Box>
-            <Button onClick={handleSearch} disabled={searchQuery==="" && containsAllergens.length===0 && lacksAllergens.length===0} variant='contained'>
+            <Button onClick={handleSearch} disabled={searchQuery.length<2 && containsAllergens.length===0 && lacksAllergens.length===0} variant='contained'>
                 Buscar
             </Button>
             <Dialog open={openDialog} onClose={() => setOpenDialog(false)} PaperProps={{
@@ -488,7 +496,7 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
                             </MenuItem>
                         ))}
                         </Select>
-                        <Button variant='inverted' sx={{padding: 0.5}} disabled={!window.localStorage.getItem("food-prefs")} onClick={handleFillUserPrefs}>
+                        <Button variant='inverted' sx={{padding: 0.5}} disabled={!userFoodPrefs} onClick={handleFillUserPrefs}>
                             <Typography variant='subtitle2'>
                                 Usar preferencias personales
                             </Typography>
@@ -527,67 +535,66 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
                         
                     </DialogActions>
                 </Dialog>
-            {foodsFiltered.length > 0 && <Typography variant='subtitle2'>{foodsFiltered.length} resultados</Typography>}
-            { foodsFiltered.map((food)=>{
-                return (
-                <Card key={food.id} sx={{
-                border: "4px solid", 
-                borderColor: "primary.dark", 
-                bgcolor: "primary.contrastText",
-                width:"90%", 
-                height: "15vh", 
-                minHeight: "80px",
-                maxHeight: "120px", 
-                display:"flex",
-                }}>
-                    <CardMedia sx={{width:"25%", borderRight: "4px solid", borderColor: "primary.dark", cursor: "pointer"}}
-                        image={food.picture==="defaultFood.png"?NoPhoto:food.picture}
-                        title={food.name}
-                        onClick={()=> handleFoodClick(food.id)}>      
-                    </CardMedia>
-                    <CardContent sx={{
-                    width:"75%",
-                    height: "100%", 
-                    display:"flex", 
-                    flexDirection: "column", 
-                    justifyContent: "center",
-                    alignItems: "center",
-                    padding:0,
+            {allDone && <Typography variant='subtitle2'>{foodsFiltered.length} resultados</Typography>}
+            {!isSearching 
+                ? foodsFiltered.map((food)=>{
+                    return (
+                    <Card key={food.id} sx={{
+                    border: "4px solid", 
+                    borderColor: "primary.dark", 
+                    bgcolor: "primary.contrastText",
+                    width:"90%", 
+                    height: "15vh", 
+                    minHeight: "80px",
+                    maxHeight: "120px", 
+                    display:"flex",
                     }}>
-                        <Typography 
-                        variant="body2" 
-                        color="primary.dark" 
-                        fontSize={15} 
-                        fontFamily="Montserrat"
-                        width="100%" 
-                        height="60%" 
-                        sx={{alignContent:"center", borderBottom: "4px solid", borderColor: "primary.main", cursor:"pointer"}}
-                        onClick={()=> handleFoodClick(food.id)}>
-                            {food.name}
-                        </Typography>
-                        <Box sx={{
-                        width:"100%", 
+                        <CardMedia sx={{width:"25%", borderRight: "4px solid", borderColor: "primary.dark", cursor: "pointer"}}
+                            image={food.picture==="defaultFood.png"?NoPhoto:food.picture}
+                            title={food.name}
+                            onClick={()=> handleFoodClick(food.id)}>      
+                        </CardMedia>
+                        <CardContent sx={{
+                        width:"75%",
+                        height: "100%", 
                         display:"flex", 
-                        flexDirection: "row",
-                        justifyContent: "space-between",
-                        height: "40%",
-                        bgcolor: "primary.dark"
+                        flexDirection: "column", 
+                        justifyContent: "center",
+                        alignItems: "center",
+                        padding:0,
                         }}>
-                            
-                            <FoodRate food={food} onRatingChange={onRatingChange}/>  
-                            <FoodCommentsCount id={food.id} onClick={()=>{}} noneColor='grey' someColor='#c9c9c9'/>
-                            {Scores([   "eco_score_" + food.foodData?.ecoscore_grade, 
-                                "nutri_score_" + food.foodData?.nutriscore_grade,
-                                "nova_score_" + food.foodData?.nova_group as string
-                            ])}     
-                            
-                        </Box>
-                    </CardContent>
-                </Card>
-                
-                
-                )
-            })
+                            <Typography 
+                            variant="body2" 
+                            color="primary.dark" 
+                            fontSize={15} 
+                            fontFamily="Montserrat"
+                            width="100%" 
+                            height="60%" 
+                            sx={{alignContent:"center", borderBottom: "4px solid", borderColor: "primary.main", cursor:"pointer"}}
+                            onClick={()=> handleFoodClick(food.id)}>
+                                {food.name}
+                            </Typography>
+                            <Box sx={{
+                            width:"100%", 
+                            display:"flex", 
+                            flexDirection: "row",
+                            justifyContent: "space-between",
+                            height: "40%",
+                            bgcolor: "primary.dark"
+                            }}>
+                                
+                                <FoodRate food={food} onRatingChange={onRatingChange}/>  
+                                <FoodCommentsCount id={food.id} onClick={()=>{}} noneColor='grey' someColor='#c9c9c9'/>
+                                {Scores([   "eco_score_" + food.foodData?.ecoscore_grade, 
+                                    "nutri_score_" + food.foodData?.nutriscore_grade,
+                                    "nova_score_" + food.foodData?.nova_group as string
+                                ])}     
+                                
+                            </Box>
+                        </CardContent>
+                    </Card>
+                    )})
+                : <CircularProgress/>
             }
             <Snackbar
                 open = {successOpen}

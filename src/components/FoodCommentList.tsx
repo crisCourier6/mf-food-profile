@@ -11,6 +11,7 @@ import dayjs from 'dayjs';
 const FoodCommentList: React.FC<{ foodLocal:FoodLocal|null, show:boolean, hide:()=>void }> = ({ foodLocal, show, hide }) => {
     const [comments, setComments] = useState<UserCommentsFood[]>([])
     const commentsURL = "/comments-food"
+    const token = window.sessionStorage.getItem("token") || window.localStorage.getItem("token")
     const [selectedComment, setSelectedComment] = useState<UserCommentsFood | null>(null);
     const [selectedCommentParent, setSelectedCommentParent] = useState<UserCommentsFood | null>(null);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -24,7 +25,7 @@ const FoodCommentList: React.FC<{ foodLocal:FoodLocal|null, show:boolean, hide:(
                 {
                     withCredentials: true,
                     headers: {
-                        Authorization: "Bearer " + window.localStorage.token
+                        Authorization: "Bearer " + token
                     }
                 }
             )
@@ -102,7 +103,7 @@ const FoodCommentList: React.FC<{ foodLocal:FoodLocal|null, show:boolean, hide:(
 
             api.patch(`${commentsURL}/${selectedComment.id}`, updatedComment, {
                 withCredentials: true,
-                headers: { Authorization: "Bearer " + window.localStorage.token },
+                headers: { Authorization: "Bearer " + token },
             })
                 .then(res => {
                     updateComment(updatedComment)
@@ -123,7 +124,7 @@ const FoodCommentList: React.FC<{ foodLocal:FoodLocal|null, show:boolean, hide:(
             api.delete(`${commentsURL}/${selectedComment.id}`, 
                 {
                 withCredentials: true,
-                headers: { Authorization: "Bearer " + window.localStorage.token },
+                headers: { Authorization: "Bearer " + token },
                 }
             )
             .then(res => {
@@ -338,8 +339,8 @@ const FoodCommentList: React.FC<{ foodLocal:FoodLocal|null, show:boolean, hide:(
                 <DialogContent>
                     <Typography variant='subtitle1'>
                         {selectedComment?.isHidden
-                            ?<>¿Seguro que desea desactivar este comentario? El comentario seguirá existiendo pero su contenido no será visible</>
-                            :<>¿Seguro que desea restaurar este comentario? Su contenido será visible para todos</>
+                            ?<>¿Seguro que desea restaurar este comentario? Su contenido será visible para todos</>
+                            :<>¿Seguro que desea desactivar este comentario? El comentario seguirá existiendo pero su contenido no será visible</>
                         }
                     </Typography>
                     
