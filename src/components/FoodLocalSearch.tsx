@@ -162,6 +162,12 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
         }
         
         navigate(`/search?${queryParams.toString()}`);
+        
+    }
+
+    const handleClear = () => {
+        setSearchQuery('')
+        navigate(`/search`);
     }
 
     const handleFoodClick = (id:string) => {
@@ -382,7 +388,7 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
                             searchQuery && (
                                 <InputAdornment position="end">
                                     <IconButton
-                                        onClick={() => setSearchQuery('')} // Clear the input
+                                        onClick={handleClear} // Clear the input
                                         edge="end"
                                     >
                                         <ClearIcon />
@@ -396,7 +402,7 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
                     Filtros
                 </Button>
             </Box>
-            <Button onClick={handleSearch} disabled={searchQuery.length<2 && containsAllergens.length===0 && lacksAllergens.length===0} variant='contained'>
+            <Button onClick={handleSearch} disabled={searchQuery.length<1 && containsAllergens.length===0 && lacksAllergens.length===0 && codeQuery.length===0} variant='contained'>
                 Buscar
             </Button>
             <Dialog open={openDialog} onClose={() => setOpenDialog(false)} PaperProps={{
