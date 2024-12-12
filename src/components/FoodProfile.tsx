@@ -558,7 +558,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                     pushNutrition(
                         `Colesterol (${nutriments["cholesterol_unit"]})`,
                         cholesterol_value,
-                        cholesterol_serving
+                        cholesterol_serving || ""
                     );
                 }
 
@@ -591,7 +591,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                     pushNutrition(
                         `Sodio (${nutriments["sodium_unit"]})`,
                         sodium_value,
-                        sodium_serving
+                        sodium_serving || ""
                     );
                 }
                 setNutritionRows(nutrition)
