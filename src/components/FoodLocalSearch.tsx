@@ -106,7 +106,6 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
     }, [location.search, allergensAll])
 
     useEffect(() => {
-        console.log(foods)
         if (filter === 'all') {
             setFoodsFiltered(foods);
         } 

@@ -20,7 +20,7 @@ const FoodCommentList: React.FC<{ foodLocal:FoodLocal|null, show:boolean, hide:(
     useEffect(()=>{
         if (foodLocal){
             let queryParams = `?f=${foodLocal.id}&wc=true&op=true&wp=true&wu=true`
-            console.log(`${commentsURL}${queryParams}`)
+            //console.log(`${commentsURL}${queryParams}`)
             api.get(`${commentsURL}${queryParams}`, 
                 {
                     withCredentials: true,
@@ -30,7 +30,6 @@ const FoodCommentList: React.FC<{ foodLocal:FoodLocal|null, show:boolean, hide:(
                 }
             )
             .then(res => {
-                console.log(res.data)
                 setComments(res.data)
             })
             .catch(error => {
@@ -89,7 +88,6 @@ const FoodCommentList: React.FC<{ foodLocal:FoodLocal|null, show:boolean, hide:(
             setComments((prevComments) =>
                 prevComments.filter((comment) => comment.id !== commentId)
             );
-            console.log("actualice comments")
         }
         
     };

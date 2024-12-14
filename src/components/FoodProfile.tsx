@@ -419,7 +419,6 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
              }
         })
         .then((response)=>{
-            console.log(response.data)
             if(!response.data){
                 return navigate("/food/" + id + "/edit")
                 
@@ -777,7 +776,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                             fontSize={14}
                             textAlign={"justify"}
                             sx={{textDecoration: "underline"}}>
-                                Agregar/Editar
+                                Aportar/Editar
                             </Typography>
                         </Button>
                     </Box>

@@ -51,7 +51,6 @@ const FoodListMini: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible 
     }, [])
 
     useEffect(() => {
-        console.log(foods)
         if (filter === 'all') {
             setFoodsFiltered(foods);
         } 

@@ -24,7 +24,6 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
 
     useEffect(()=>{
         let queryParams = `?f=${id}&wc=true&op=true&wp=true&wu=true`
-        console.log(`${commentsURL}${queryParams}`)
         api.get(`${commentsURL}${queryParams}`, 
             {
                 withCredentials: true,
@@ -34,7 +33,6 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
             }
         )
         .then(res => {
-            console.log(res.data)
             setComments(res.data)
         })
         .catch(error => {
@@ -91,7 +89,6 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
             setComments((prevComments) =>
                 prevComments.filter((comment) => comment.id !== commentId)
             );
-            console.log("actualice comments")
         }
         
     };

@@ -3,24 +3,25 @@ import { Button, Paper, Typography, Accordion, AccordionDetails, AccordionSummar
 import "./Components.css"
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
-const FoodAdditive: React.FC<{additives:string[]}> = (props) => {
-    const textLength = 450
-    const [expanded, setExpanded] = useState<number|false>(false)
+const FoodAdditive: React.FC<{additives: string[]}> = (props) => {
+    const textLength = 450;
+    const [expanded, setExpanded] = useState<number | false>(false);
     const [isFullText, setIsFullText] = useState<Record<number, boolean>>({});
+    const [additiveData, setAdditiveData] = useState<{description: string, link: string}[]>([]);
 
-    const shrinkDescription = (text:string, maxLength:number) => {
-        if (text.length <= maxLength) return text
-        return text.substring(0, maxLength) + "..."
-    }
+    const shrinkDescription = (text: string, maxLength: number) => {
+        if (text.length <= maxLength) return text;
+        return text.substring(0, maxLength) + "...";
+    };
 
     const toggleText = (index: number) => {
-        setIsFullText(prev => ({
+        setIsFullText((prev) => ({
             ...prev,
             [index]: !prev[index],
         }));
     };
 
-     const fetchDescription = async (wikidata: string): Promise<Record<string, string>> => {
+    const fetchDescription = async (wikidata: string): Promise<{ description: string; link: string }> => {
         const url = "https://www.wikidata.org/w/rest.php/wikibase/v0/entities/items/";
         const url2 = "https://es.wikipedia.org/w/api.php";
 
@@ -29,7 +30,7 @@ const FoodAdditive: React.FC<{additives:string[]}> = (props) => {
 
         if (data["sitelinks"]) {
             const title = data["sitelinks"]["eswiki"] ? data["sitelinks"]["eswiki"]["title"] : null;
-            if (!title) return {};
+            if (!title) return { description: "Sin descripción", link: "" };
 
             const response2 = await fetch(
                 url2 +
@@ -37,79 +38,72 @@ const FoodAdditive: React.FC<{additives:string[]}> = (props) => {
                 title
             );
             const data2 = await response2.json();
-            return {description: data2["query"]["pages"][0]["extract"].split("\n\n\n")[0].replace(/\[.*?\]/g, ' ').trim(), 
-                    link:"https://es.wikipedia.org/wiki/" + title.replace(/ /g, "_")};
+            return {
+                description: data2["query"]["pages"][0]["extract"].split("\n\n\n")[0].replace(/\[.*?\]/g, ' ').trim(),
+                link: "https://es.wikipedia.org/wiki/" + title.replace(/ /g, "_")
+            };
         }
 
-        return {};
+        return { description: "Sin descripción", link: "" };
     };
- 
-    return ( <Paper elevation={0}>
-        <>
-        {props.additives.map((data, index) => {
-            let name=data.split(",")[0] 
-            let wikidata=data.split(",")[1]
-            const [link, setLink] = useState<string>("");
-            const [description, setDescription] = useState<string>("Sin descripción");
 
-            useEffect(() => {
-                fetchDescription(wikidata).then((res) => {
-                    if (res.description){
-                        setDescription(res.description)
-                        setLink(res.link)
-                    }
+    useEffect(() => {
+        const fetchData = async () => {
+            const descriptions = await Promise.all(
+                props.additives.map(async (data) => {
+                    let wikidata = data.split(",")[1];
+                    const res = await fetchDescription(wikidata);
+                    return res;
                 })
-                    
-            }, [wikidata]);
-            const isExpanded = expanded === index;
-            const fullTextVisible = isFullText[index] || !isExpanded;
-            return (
-            <Accordion 
-            key={name}
-            expanded={isExpanded}
-            onChange={() => setExpanded(isExpanded ? false : index)}
-            
-            >
-                <AccordionSummary
-                expandIcon={<ExpandMoreIcon />}
-                aria-controls="panel1-content"
-                id={`panel${index}-header`}
-                sx={{textAlign: "left"}}
-                >
-                    <Typography variant='subtitle1' color= "primary.dark">
-                        {name}
-                    </Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                    <Typography fontSize={12} textAlign="justify">
-                        {fullTextVisible? description:shrinkDescription(description, textLength)}
-                        {link!=="" && (
-                            <a href={link} target="_blank" rel="noopener noreferrer" style={{ marginLeft: '8px' }}>
-                                Fuente: Wikipedia
-                            </a>
-                        )}
-                    </Typography>
-                    {description.length > textLength && (
-                    <Button
-                        size="small"
-                        onClick={() => toggleText(index)}
-                        color="primary"
-                    >
-                        {fullTextVisible ? "Leer menos" : "Seguir leyendo"}
-                        
-                    </Button> 
-                    )}
-                    
-                </AccordionDetails>
-            </Accordion>   )           
-        })} 
-        </>
+            );
+            setAdditiveData(descriptions);
+        };
+        fetchData();
+    }, [props.additives]);
+
+    return (
+        <Paper elevation={0}>
+            <>
+                {props.additives.map((data, index) => {
+                    const name = data.split(",")[0];
+                    const { description, link } = additiveData[index] || { description: "Sin descripción", link: "" };
+
+                    const isExpanded = expanded === index;
+                    const fullTextVisible = isFullText[index] || !isExpanded;
+
+                    return (
+                        <Accordion key={name} expanded={isExpanded} onChange={() => setExpanded(isExpanded ? false : index)}>
+                            <AccordionSummary
+                                expandIcon={<ExpandMoreIcon />}
+                                aria-controls="panel1-content"
+                                id={`panel${index}-header`}
+                                sx={{ textAlign: "left" }}
+                            >
+                                <Typography variant="subtitle1" color="primary.dark">
+                                    {name}
+                                </Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <Typography fontSize={12} textAlign="justify">
+                                    {fullTextVisible ? description : shrinkDescription(description, textLength)}
+                                    {link && (
+                                        <a href={link} target="_blank" rel="noopener noreferrer" style={{ marginLeft: '8px' }}>
+                                            Fuente: Wikipedia
+                                        </a>
+                                    )}
+                                </Typography>
+                                {description.length > textLength && (
+                                    <Button size="small" onClick={() => toggleText(index)} color="primary">
+                                        {fullTextVisible ? "Leer menos" : "Seguir leyendo"}
+                                    </Button>
+                                )}
+                            </AccordionDetails>
+                        </Accordion>
+                    );
+                })}
+            </>
         </Paper>
-        
-            
-        
-    )
-    
+    );
 };
 
 export default FoodAdditive;
