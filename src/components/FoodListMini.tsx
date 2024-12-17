@@ -211,9 +211,9 @@ const FoodListMini: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible 
                     aria-label="filter options"
                     sx={{ width:"100%",display:"flex",flexDirection:"row",justifyContent:"center" }}
                 >
-                    <ToggleButton value="all" sx={{flex:1, fontSize:{xs:16, md:18}, py: 0.5}}>Todos</ToggleButton>
-                    <ToggleButton value="likes" sx={{flex:1, fontSize:{xs:16, md:18}, py: 0.5 }}>Me gustan</ToggleButton>
-                    <ToggleButton value="dislikes" sx={{flex:1, fontSize:{xs:16, md:18}, py: 0.5}}>No me gustan</ToggleButton>
+                    <ToggleButton value="all" sx={{flex:1, fontSize:{xs:14, md:18}, py: 0.5}}>Todos</ToggleButton>
+                    <ToggleButton value="likes" sx={{flex:1, fontSize:{xs:14, md:18}, py: 0.5 }}>Me gustan</ToggleButton>
+                    <ToggleButton value="dislikes" sx={{flex:1, fontSize:{xs:14, md:18}, py: 0.5}}>No me gustan</ToggleButton>
                 </ToggleButtonGroup>
             </Box>
             
