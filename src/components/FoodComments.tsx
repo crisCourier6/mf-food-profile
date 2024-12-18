@@ -418,6 +418,7 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
                     <TextField
                         fullWidth
                         label="Comentario"
+                        inputProps = {{maxLength: 500}}
                         multiline
                         rows={4}
                         value={editedContent}
@@ -456,6 +457,7 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
                     <TextField
                         label="Comentario"
                         fullWidth
+                        inputProps = {{maxLength: 500}}
                         multiline
                         rows={4}
                         value={newCommentContent}

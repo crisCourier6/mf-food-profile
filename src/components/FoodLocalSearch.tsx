@@ -384,6 +384,7 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
             }}>
                 <TextField 
                     value={searchQuery}
+                    inputProps = {{maxLength: 100}}
                     onChange={(e)=>setSearchQuery(e.target.value)}
                     placeholder="Nombre o marca"
                     variant="standard"
@@ -519,6 +520,7 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
                             value={codeQuery}
                             onChange={(e)=>setCodeQuery(e.target.value)}
                             placeholder="Código de barras"
+                            inputProps = {{maxLength: 20}}
                             variant="standard"
                             fullWidth
                             sx={{mt: 0.5, maxWidth: "100%"}}
