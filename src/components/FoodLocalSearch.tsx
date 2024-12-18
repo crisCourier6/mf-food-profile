@@ -164,6 +164,13 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
         
     }
 
+    const handleKeyDown = (event:any) => {
+        if (event.key === "Enter" && searchQuery.length>1) {
+            event.target.blur()
+            return handleSearch()
+        }
+    };
+
     const handleClear = () => {
         setSearchQuery('')
         navigate(`/search`);
@@ -381,6 +388,7 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
                     placeholder="Nombre o marca"
                     variant="standard"
                     fullWidth
+                    onKeyDown={handleKeyDown}
                     sx={{mt: 0.5, maxWidth: "90%"}}
                     InputProps={{
                         endAdornment: (
