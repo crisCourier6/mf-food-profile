@@ -1,15 +1,26 @@
-import React, { useEffect, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import api from '../api';
 import { Box, IconButton, Typography, CircularProgress, Tooltip, } from '@mui/material';
 import CommentRoundedIcon from '@mui/icons-material/CommentRounded';
 
-const FoodCommentsCount: React.FC<{id:string | undefined, onClick: () => void, noneColor: string, someColor:string}> = ({id, onClick, noneColor, someColor}) => {
+interface FoodCommentsCountProps {
+    id: string; // Ensure 'id' is typed
+    onClick: () => void;
+    noneColor: string;
+    someColor: string;
+}
+
+export interface FoodCommentsCountRef {
+    refreshCommentCount: () => void;
+}
+
+const FoodCommentsCount= forwardRef(({id, onClick, noneColor, someColor}: FoodCommentsCountProps, ref) => {
     const [commentsCount, setCommentsCount] = useState(0)
     const commentsURL = "/comments-food"
     const token = window.sessionStorage.getItem("token") || window.localStorage.getItem("token")
     const [allDone, setAllDone] = useState(false)
-    
-    useEffect(() => {
+
+    const fetchCommentCount = async () => {
         if (id){
             let queryParams = `?f=${id}&oc=true`
             api.get(`${commentsURL}${queryParams}`, {
@@ -28,8 +39,15 @@ const FoodCommentsCount: React.FC<{id:string | undefined, onClick: () => void, n
                 setAllDone(true)
             })
         }
-        
-    }, []);
+    }
+    
+    useEffect(() => {
+        fetchCommentCount()
+    }, [id]);
+
+    useImperativeHandle(ref, () => ({
+        refreshCommentCount: fetchCommentCount,
+    }));
 
     return ( 
         <Tooltip title={"Ver comentarios"} key="comments" placement="top" arrow={true}>
@@ -38,11 +56,11 @@ const FoodCommentsCount: React.FC<{id:string | undefined, onClick: () => void, n
             flexDirection: "row",
             alignItems: "center",
         }}>
-            <IconButton  onClick={onClick}
-            sx={{
-                color: commentsCount>0?someColor:noneColor
+            <IconButton onClick={() => {
+                fetchCommentCount(); // Refresh when clicked if needed
+                onClick();
             }}>
-                <CommentRoundedIcon sx={{fontSize: {sm: 25, xs: 15}}}/>
+                <CommentRoundedIcon sx={{fontSize: {sm: 25, xs: 15}, color: commentsCount>0?someColor:noneColor}}/>
             </IconButton>
             <Typography 
             sx={{
@@ -53,6 +71,6 @@ const FoodCommentsCount: React.FC<{id:string | undefined, onClick: () => void, n
         </Box>
         </Tooltip>
     )
-}
+})
 
 export default FoodCommentsCount;

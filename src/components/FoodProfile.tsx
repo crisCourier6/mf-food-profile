@@ -801,7 +801,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                     alignItems: "center"}}>
 
                         <FoodRate food={foodExternalSingle} onRatingChange={onRatingChange} ></FoodRate>
-                        <FoodCommentsCount id={id} onClick={handleScrollToComments} noneColor='grey' someColor='#c9c9c9'/>
+                        <FoodCommentsCount id={id || ""} onClick={handleScrollToComments} noneColor='grey' someColor='#c9c9c9'/>
                         <Button variant='text' onClick={()=>navigate("edit")} 
                         sx={{
                             padding:0.2, 
@@ -1060,7 +1060,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                     </Typography>
                 </Button>
                     <Dialog open={showQuickLookInfo} onClose={handleQuickLookClose} scroll='paper' 
-                    sx={{width: "100%", 
+                    sx={{width: "100vw", 
                         maxWidth: "500px", 
                         margin: "auto"
                     }}>
@@ -1078,7 +1078,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                             </DialogContentText>
                             <Button variant="contained"
                                     component="a"
-                                    href="https://docs.score-environnemental.com/v/en"
+                                    href="https://blog.openfoodfacts.org/es/news/lanzamiento-del-eco-score-el-puntaje-ambiental-para-productos-alimenticios"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     size="small"
@@ -1087,8 +1087,9 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                                         gap: 1
 
                                     }}>
+                                        <LaunchRoundedIcon sx={{fontSize: 20}}></LaunchRoundedIcon>
                                     Más información 
-                                    <LaunchRoundedIcon sx={{fontSize: 20}}></LaunchRoundedIcon>
+                                    
                             </Button>
                             <DialogContentText>
                                 <Typography fontSize={15} fontWeight="bold">
@@ -1110,8 +1111,9 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                                         gap: 1
 
                                     }}>
+                                        <LaunchRoundedIcon sx={{fontSize: 20}}></LaunchRoundedIcon>
                                     Más información 
-                                    <LaunchRoundedIcon sx={{fontSize: 20}}></LaunchRoundedIcon>
+                                    
                             </Button>
                             <DialogContentText>
                                 <Typography fontSize={15} fontWeight="bold">
@@ -1131,7 +1133,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                             </DialogContentText>
                             <Button variant="contained"
                                     component="a"
-                                    href="https://en.wikipedia.org/wiki/Nova_classification"
+                                    href="https://es.openfoodfacts.org/nova"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     size="small"
@@ -1140,8 +1142,9 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                                         gap: 1
 
                                     }}>
-                                    Más información 
                                     <LaunchRoundedIcon sx={{fontSize: 20}}></LaunchRoundedIcon>
+                                    Más información 
+                                    
                             </Button>
                         </DialogContent>
                         <DialogActions>

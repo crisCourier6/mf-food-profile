@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import api from '../api';
 import { FoodLocal } from '../interfaces/foodLocal';
 import { Box, Button, IconButton, Tooltip, } from '@mui/material';
@@ -8,7 +8,7 @@ import Visibility from "@mui/icons-material/Visibility"
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import { esES } from '@mui/x-data-grid/locales';
-import FoodCommentsCount from './FoodCommentsCount';
+import FoodCommentsCount, { FoodCommentsCountRef } from './FoodCommentsCount';
 import FoodCommentList from './FoodCommentList';
 
 const FoodListLocal: React.FC = () => {
@@ -18,6 +18,7 @@ const FoodListLocal: React.FC = () => {
     const [showCommentsDialog, setShowCommentsDialog] = useState(false)
     const [selectedFood, setSelectedFood] = useState<FoodLocal|null>(null)
     const foodURL = "/food/local"
+    const commentCountRef = useRef<FoodCommentsCountRef>(null);
     useEffect(()=>{
         document.title = "Lista local de alimentos - EyesFood";
         api.get(foodURL, {
@@ -32,7 +33,6 @@ const FoodListLocal: React.FC = () => {
         
     },[])      
     const columns: GridColDef[] = [
-        {field: "id", headerName: "Código", flex: 1, headerClassName: "header-colors"},
         {field: "name", headerName: "Nombre", flex: 2, headerClassName: "header-colors"},
         {
             field: 'actions',
@@ -54,7 +54,7 @@ const FoodListLocal: React.FC = () => {
                                     <Visibility/>
                                 </IconButton>
                             </Tooltip>
-                            <FoodCommentsCount id={params.row.id} onClick={()=>handleShowComments(params.row)} noneColor='lightgrey' someColor='primary.main'/>      
+                            <FoodCommentsCount id={params.row.id} onClick={()=>handleShowComments(params.row)} noneColor='lightgrey' someColor='primary.main' ref={commentCountRef}/>      
                             <Tooltip title="Editar" key="edit" placement="right" arrow={true}>
                                 <IconButton color="primary" onClick={() => handleEditFood(params.row.id)}>
                                     <EditIcon />
@@ -94,15 +94,19 @@ const FoodListLocal: React.FC = () => {
         setShowCommentsDialog(false)
     }
 
+    const handleDeleteComment = () => {
+        if (commentCountRef.current) {
+            commentCountRef.current.refreshCommentCount(); // Trigger refresh
+        }
+    };
+
     const CustomToolbar: React.FC = () => (
         <GridToolbarContainer
         sx={{
             border: "2px solid",
             borderColor: 'primary.dark', // Change the background color
         }}>
-            <GridToolbarColumnsButton/>
             <GridToolbarFilterButton/>
-            <GridToolbarDensitySelector/>
             <GridToolbarExport />
             <Tooltip title="Crear notificación" key="create" placement="bottom">
                 <Button
@@ -144,6 +148,7 @@ const FoodListLocal: React.FC = () => {
                     sx={{
                         
                         width: "100%", 
+                        maxWidth: "800px",
                         minWidth: 0,
                         '& .MuiDataGrid-row:nth-of-type(odd)': {
                             backgroundColor: 'secondary.light', // Light grey for odd rows
@@ -170,7 +175,12 @@ const FoodListLocal: React.FC = () => {
                     }}
                 />
                 :null}
-                <FoodCommentList foodLocal={selectedFood} show={showCommentsDialog} hide={handleCloseComments}/>
+                <FoodCommentList 
+                foodLocal={selectedFood} 
+                show={showCommentsDialog} 
+                hide={handleCloseComments} 
+                onCommentDeleted={handleDeleteComment} 
+                canEdit={true}/>
         </Box>
         
         </>

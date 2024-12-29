@@ -9,7 +9,7 @@ import { FoodLocal } from '../interfaces/foodLocal';
 import CloseIcon from '@mui/icons-material/Close';
 import dayjs from 'dayjs';
 
-const FoodCommentList: React.FC<{ foodLocal:FoodLocal|null, show:boolean, hide:()=>void }> = ({ foodLocal, show, hide }) => {
+const FoodCommentList: React.FC<{ foodLocal:FoodLocal|null, show:boolean, hide:()=>void, onCommentDeleted: () => void, canEdit: boolean }> = ({ foodLocal, show, hide, onCommentDeleted, canEdit }) => {
     const [comments, setComments] = useState<UserCommentsFood[]>([])
     const commentsURL = "/comments-food"
     const token = window.sessionStorage.getItem("token") || window.localStorage.getItem("token")
@@ -135,6 +135,9 @@ const FoodCommentList: React.FC<{ foodLocal:FoodLocal|null, show:boolean, hide:(
             .finally(()=>{
                 setSelectedComment(null)
                 setSelectedCommentParent(null)
+                if (onCommentDeleted) {
+                    onCommentDeleted(); // Notify parent to refresh count
+                }
             })
         }
         setShowDeleteDialog(false);  // Close dialog after deleting
@@ -190,11 +193,11 @@ const FoodCommentList: React.FC<{ foodLocal:FoodLocal|null, show:boolean, hide:(
                 </Box>
             </DialogTitle>
             <DialogContent>
-            
+                <Box sx={{display: "flex", flexDirection: "column", alignItems: "center", width:"100%", gap: 2}}>
                 {comments.length>0 
                     ?   comments.map(comment => {
                         return (
-                        <Box key={comment.id} sx={{display: "flex", flexDirection: "column", alignItems: "flex-end", width:"100%",}}>
+                        <Box key={comment.id} sx={{display: "flex", flexDirection: "column", alignItems: "flex-end", width:"100%"}}>
                             <Box  sx={{ 
                                 display: 'flex', 
                                 width: "95%",
@@ -218,28 +221,34 @@ const FoodCommentList: React.FC<{ foodLocal:FoodLocal|null, show:boolean, hide:(
                                     >
                                         {comment.user?.name} 
                                     </Typography>
-                                    <Tooltip title={comment.isHidden?"Restaurar comentario": "Desactivar comentario"} key="view" placement="left" arrow={true}>
-                                        <IconButton size="small" onClick={()=>openEditDialog(comment, null)}>
-                                            {comment.isHidden
-                                                ?<Visibility sx={{ 
-                                                    color:"primary.contrastText", 
-                                                    fontSize:18
-                                                }} />
-                                                :<VisibilityOff sx={{ 
-                                                    color:"primary.contrastText", 
-                                                    fontSize:18
-                                                }} />
-                                            }
-                                        </IconButton>
-                                    </Tooltip>
-                                    <Tooltip title={"Eliminar comentario"} key="delete" placement="right" arrow={true}>
-                                        <IconButton size="small" onClick={()=>openDeleteDialog(comment, null)}>
-                                            <DeleteForeverRoundedIcon sx={{ 
-                                                color:"error.main", 
-                                                fontSize:18
-                                            }} />
-                                        </IconButton>
-                                    </Tooltip>
+
+                                    {
+                                        canEdit && <>
+                                            <Tooltip title={comment.isHidden?"Restaurar comentario": "Desactivar comentario"} key="view" placement="left" arrow={true}>
+                                                <IconButton size="small" onClick={()=>openEditDialog(comment, null)}>
+                                                    {comment.isHidden
+                                                        ?<Visibility sx={{ 
+                                                            color:"primary.contrastText", 
+                                                            fontSize:18
+                                                        }} />
+                                                        :<VisibilityOff sx={{ 
+                                                            color:"primary.contrastText", 
+                                                            fontSize:18
+                                                        }} />
+                                                    }
+                                                </IconButton>
+                                            </Tooltip>
+                                            <Tooltip title={"Eliminar comentario"} key="delete" placement="right" arrow={true}>
+                                                <IconButton size="small" onClick={()=>openDeleteDialog(comment, null)}>
+                                                    <DeleteForeverRoundedIcon sx={{ 
+                                                        color:"error.main", 
+                                                        fontSize:18
+                                                    }} />
+                                                </IconButton>
+                                            </Tooltip>
+                                        </>
+                                    }
+                                    
                                 </Paper>
                                 <Box sx={{display: "flex", flexDirection: "column", width: "100%"}}>
                                     <Typography variant="subtitle2" textAlign={"justify"} sx={{px:1, fontStyle: comment.isHidden?"italic":"normal"}}>
@@ -249,7 +258,6 @@ const FoodCommentList: React.FC<{ foodLocal:FoodLocal|null, show:boolean, hide:(
                                         {dayjs(comment.createdAt).format("DD/MM/YYYY")}
                                     </Typography>
                                 </Box>
-                                
                             </Box>
                             {comment.commentHasChild.map(parentChild => {
                                 return (
@@ -278,7 +286,9 @@ const FoodCommentList: React.FC<{ foodLocal:FoodLocal|null, show:boolean, hide:(
                                             >
                                                 {parentChild.childComment.user?.name} 
                                             </Typography>
-                                                <Tooltip title={parentChild.childComment.isHidden?"Restaurar comentario": "Desactivar comentario"} key="view" placement="left" arrow={true}>
+                                            {
+                                                canEdit && <>
+                                                     <Tooltip title={parentChild.childComment.isHidden?"Restaurar comentario": "Desactivar comentario"} key="view" placement="left" arrow={true}>
                                                     <IconButton size="small" onClick={()=>openEditDialog(parentChild.childComment, comment)}>
                                                         {parentChild.childComment.isHidden
                                                             ?<Visibility sx={{ 
@@ -300,6 +310,9 @@ const FoodCommentList: React.FC<{ foodLocal:FoodLocal|null, show:boolean, hide:(
                                                         }} />
                                                     </IconButton>
                                                 </Tooltip>
+                                                </>
+                                            }
+                                               
                                         </Paper>
                                         <Box sx={{display: "flex", flexDirection: "column", width: "100%"}}>
                                             <Typography variant="subtitle2" textAlign={"justify"} sx={{px:1, fontStyle:parentChild.childComment.isHidden?"italic":"normal"}}>
@@ -323,6 +336,7 @@ const FoodCommentList: React.FC<{ foodLocal:FoodLocal|null, show:boolean, hide:(
                         Aún no hay comentarios en este alimento
                     </Typography>
             }
+            </Box>
             </DialogContent>
         </Dialog>
             

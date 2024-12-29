@@ -22,6 +22,7 @@ import ScannerIcon from '../svgs/ScannerIcon';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import SearchIcon from '@mui/icons-material/Search';
 import { Allergen } from '../interfaces/allergen';
+import FoodCommentList from './FoodCommentList';
 
 const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible }) => {
     const navigate = useNavigate()
@@ -38,6 +39,7 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
         "en:molluscs", "en:sulphur-dioxide-and-sulphites"]
     const [foods, setFoods] = useState<FoodLocal[]>([])
     const [foodsFiltered, setFoodsFiltered] = useState<FoodLocal[]>([])
+    const [selectedFood, setSelectedFood] = useState<FoodLocal | null>(null)
     const [searchQuery, setSearchQuery] = useState("");
     const [isSearching, setIsSearching] = useState(false)
     const [lacksAllergens, setLacksAllergens] = useState<Allergen[]>([])
@@ -46,6 +48,7 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
     const [successOpen, setSuccessOpen] = useState(false)
     const [page, setPage] = useState(1)
     const [limit, setLimit] = useState(10)
+    const [showCommentsDialog, setShowCommentsDialog] = useState(false)
     const [allDone, setAllDone] = useState(false)
     const [resultsTotal, setResultsTotal] = useState(0)
     const textFieldRef = useRef<HTMLInputElement>(null); // Create a ref to the TextField
@@ -327,6 +330,15 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
         setPage(value);
         handleSearch(value, true)
     };
+
+    const handleShowComments = (foodLocal:FoodLocal) => {
+            setSelectedFood(foodLocal)
+            setShowCommentsDialog(true)
+    }
+
+    const handleCloseComments = () => {
+        setShowCommentsDialog(false)
+    }
 
     const handleFillUserPrefs = () => {
 
@@ -625,7 +637,7 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
                             }}>
                                 
                                 <FoodRate food={food} onRatingChange={onRatingChange}/>  
-                                <FoodCommentsCount id={food.id} onClick={()=>{}} noneColor='grey' someColor='#c9c9c9'/>
+                                <FoodCommentsCount id={food.id} onClick={()=>{handleShowComments(food)}} noneColor='grey' someColor='#c9c9c9'/>
                                 {Scores([   "eco_score_" + food.foodData?.ecoscore_grade, 
                                     "nutri_score_" + food.foodData?.nutriscore_grade,
                                     "nova_score_" + food.foodData?.nova_group as string
@@ -685,6 +697,13 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
                 </Box>
                 
             }
+            <FoodCommentList 
+                foodLocal={selectedFood} 
+                show={showCommentsDialog} 
+                hide={handleCloseComments} 
+                onCommentDeleted={()=>{}} 
+                canEdit={false}
+            />
             <Snackbar
                 open = {successOpen}
                 autoHideDuration={3000}
