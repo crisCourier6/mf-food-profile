@@ -6,6 +6,7 @@ import { UserCommentsFood } from '../interfaces/UserCommentsFood';
 import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import ReplyRoundedIcon from '@mui/icons-material/ReplyRounded';
+import AddIcon from '@mui/icons-material/Add';
 import dayjs from 'dayjs';
 
 const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = ({ expanded, toggleExpand }) => {
@@ -114,6 +115,26 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
                 })
             );
         }
+        else if (selectedComment){
+            setComments((prevComments) =>
+                prevComments.map((comment) => {
+                    if (comment.id === selectedComment.id) {
+                        return {
+                            ...comment,
+                            commentHasChild: [
+                                ...comment.commentHasChild,
+                                {
+                                    parentId: selectedComment.id,
+                                    childId: newComment.id,
+                                    childComment: newComment,
+                                },
+                            ],
+                        };
+                    }
+                    return comment;
+                })
+            );
+        }
         else{
             setComments(prevComments => [newComment, ...prevComments]);
         }
@@ -181,10 +202,10 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
 
     const handleCreateComment = () => {
         const newComment = {
-            content: selectedComment?`(Respondiendo a ${selectedComment.user.name}) ${newCommentContent}`: newCommentContent,
+            content: selectedComment && selectedCommentParent?`(Respondiendo a ${selectedComment.user.name}) ${newCommentContent}`: newCommentContent,
             userId: currentUserId,
             foodLocalId: id,
-            commentHasParent: selectedCommentParent? selectedCommentParent.id : null
+            commentHasParent: selectedCommentParent? selectedCommentParent.id : selectedComment?.id || null
         };
         
         // Call your API to create a comment
@@ -240,99 +261,116 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
             display: "flex",
             flexDirection: "column",
             width: "100%",
-            gap:2,
+            alignItems: "center",
+            justifyContent: "center",
+            gap:1,
         }}>
             <Paper elevation={0} square={true} sx={{
                 bgcolor: "primary.main",
                 color: "primary.contrastText",
-                border: "5px solid",
+                border: "3px solid",
                 borderColor: "primary.main",
-                justifyContent: "flex-start",
+                width: "100%",
+                justifyContent: "space-between",
+                alignItems: "center",
                 display: "flex",
-                textIndent: 10,
-                cursor: "pointer"
             }}>
+                <Typography variant='h6' sx={{color: "primary.contrastText"}}>
+                    Comentarios
+                </Typography>
                 <Typography 
                 width={"100%"} 
-                variant='h6' 
+                variant='subtitle2' 
                 color= "primary.contrastText" 
-                onClick={toggleExpand}
-                sx={{
-                    display: "flex",
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    alignItems: "center" // Ensure vertical alignment
-                }}>
-                    <Box sx={{ }}>Comentarios</Box>  {/* FlexGrow pushes the next box to the right */}
-                    <Box>{expanded ? "▲" : "▼"}</Box>
+                textAlign={"right"}
+                onClick={toggleExpand}>
+                    {expanded ? "▲ Ocultar" : "▼ Expandir"}
                 </Typography>
             </Paper>
             {expanded && <>
-                <Button variant='contained' onClick={()=>openCreateDialog(null, null)}>
-                    Comentar
+            <Box sx={{display: "flex", justifyContent: "flex-start", width: "100%"}}>
+                <Button onClick={()=>openCreateDialog(null, null)} >
+                    <AddIcon/>
+                    <Typography variant='subtitle2' sx={{textDecoration: "underline", textAlign: "left"}}>
+                        Agregar comentario
+                    </Typography>
                 </Button>
-                {comments.map(comment => {
+            </Box>
+                
+                {comments.map((comment, index) => {
                     return (
-                        <Box key={comment.id} sx={{display: "flex", flexDirection: "column", alignItems: "flex-end", width:"100%",}}>
+                        <Box key={comment.id} 
+                        sx={{display: "flex", 
+                        flexDirection: "column", 
+                        alignItems: "flex-end", 
+                        width:"100%",
+                        borderLeft: "2px solid",
+                        borderBottom: "2px solid",
+                        borderColor: "primary.light",
+                        mb: 2
+                        }}>
                             <Box  sx={{ 
                                 display: 'flex', 
-                                width: "95%",
+                                width: "100%",
                                 flexDirection: "column",
-                                border: "2px solid",
-                                borderColor: "primary.dark",
                                 gap: 0.5,
                             }}> 
                                 <Paper sx={{
                                     width:"100%", 
-                                    bgcolor: "primary.dark", 
+                                    bgcolor: "primary.light",
                                     display: "flex",
                                     alignItems: "center",
                                     justifyContent: "space-between",
-                                    borderRadius:0
+                                    borderRadius:0,
+                                    gap: 1
                                 }}>
                                     <Typography 
                                     variant="subtitle1" 
-                                    color={"primary.contrastText"}
+                                    color={"primary.dark"}
                                     sx={{flexGrow: 1, textAlign: "left", width: "80%", pl:1}}
                                     >
                                         {comment.user?.name} 
                                     </Typography>
-                                    {comment.userId === currentUserId  
-                                        ?<>                                        
-                                        <IconButton size="small" onClick={()=>openEditDialog(comment, null)}>
-                                        <EditRoundedIcon sx={{ 
-                                            color: "primary.contrastText",
-                                            fontSize: 18
-                                        }}/>
-                                        </IconButton>    
-                                        <IconButton size="small" onClick={()=>openDeleteDialog(comment, null)}>
-                                            <DeleteForeverRoundedIcon sx={{ 
-                                                color:"primary.contrastText", 
-                                                fontSize:18
-                                            }} />
-                                        </IconButton>
-                                        <IconButton size="small" onClick={()=>openCreateDialog(null, comment)}>
-                                            <ReplyRoundedIcon sx={{ 
-                                                color:"primary.contrastText", 
-                                                fontSize:18
-                                            }} />
-                                        </IconButton>
-                                        </>
-                                        :<IconButton size="small" onClick={()=>openCreateDialog(null, comment)}>
-                                            <ReplyRoundedIcon sx={{ 
-                                                color:"primary.contrastText", 
-                                                fontSize:18
-                                            }} />
-                                        </IconButton>
-                                    }
+                                    <Typography variant="subtitle2" textAlign={"right"} sx={{px:1, fontStyle: "italic"}}>
+                                        {dayjs(comment.createdAt).format("DD/MM/YYYY")}
+                                    </Typography>
+                                    
                                 </Paper>
                                 <Box sx={{display: "flex", flexDirection: "column", width: "100%"}}>
                                     <Typography variant="subtitle2" textAlign={"justify"} sx={{px:1, fontStyle: comment.isHidden?"italic":"normal"}}>
                                         {comment.isHidden ? <>Comentario desactivado</> : <>{comment.content}</>}
                                     </Typography>
-                                    <Typography variant="subtitle2" textAlign={"right"} sx={{px:1, fontStyle: "italic"}}>
-                                        {dayjs(comment.createdAt).format("DD/MM/YYYY")}
-                                    </Typography>
+                                    {comment.userId === currentUserId  
+                                        ?<Box sx={{display: "flex", width: "100%", justifyContent: "flex-end"}}>                                        
+                                        <IconButton size="small" onClick={()=>openEditDialog(comment, null)}>
+                                        <EditRoundedIcon sx={{ 
+                                            color: "primary.dark",
+                                            fontSize: 18
+                                        }}/>
+                                        </IconButton>    
+                                        <IconButton size="small" onClick={()=>openDeleteDialog(comment, null)}>
+                                            <DeleteForeverRoundedIcon sx={{ 
+                                                color:"error.main", 
+                                                fontSize:18
+                                            }} />
+                                        </IconButton>
+                                        <IconButton size="small" onClick={()=>openCreateDialog(comment, null)}>
+                                            <ReplyRoundedIcon sx={{ 
+                                                color:"primary.dark", 
+                                                fontSize:18
+                                            }} />
+                                        </IconButton>
+                                        </Box>
+                                        :<Box sx={{display: "flex", width: "100%", justifyContent: "flex-end"}}>
+                                            <IconButton size="small" onClick={()=>openCreateDialog(null, comment)}>
+                                            <ReplyRoundedIcon sx={{ 
+                                                color:"primary.dark", 
+                                                fontSize:18
+                                            }} />
+                                        </IconButton>
+                                        </Box>
+                                    }
+                                    
                                 </Box>
                                 
                             </Box>
@@ -343,47 +381,32 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
                                         display: 'flex', 
                                         width: "90%",
                                         flexDirection: "column",
-                                        border: "2px solid",
-                                        borderColor: "primary.dark",
+                                        borderLeft: "2px solid",
+                                        borderColor: "primary.light",
+                                        bgcolor: "inherit",
                                         gap: 0.5,
+                                        alignItems: "flex-end"
                                         
                                     }}> 
                                         <Paper sx={{
                                             width:"100%", 
-                                            bgcolor: "primary.dark", 
+                                            bgcolor: "primary.light", 
                                             display: "flex",
                                             alignItems: "center",
                                             justifyContent: "space-between",
-                                            borderRadius:0
+                                            borderRadius:0,
+                                            gap: 1
                                         }}>
                                             <Typography 
                                             variant="subtitle1" 
-                                            color={"primary.contrastText"}
+                                            color={"primary.dark"}
                                             sx={{flexGrow: 1, textAlign: "left", width: "80%", pl:1}}
                                             >
                                                 {parentChild.childComment.user?.name} 
                                             </Typography>
-                                            {parentChild.childComment.userId === currentUserId && <>                                        
-                                                <IconButton size="small" onClick={()=>openEditDialog(parentChild.childComment, comment)}>
-                                                    <EditRoundedIcon sx={{ 
-                                                        color: "primary.contrastText",
-                                                        fontSize: 18
-                                                    }}/>
-                                                </IconButton>    
-                                                <IconButton size="small" onClick={()=>openDeleteDialog(parentChild.childComment, comment)}>
-                                                    <DeleteForeverRoundedIcon sx={{ 
-                                                        color:"primary.contrastText", 
-                                                        fontSize:18
-                                                    }} />
-                                                </IconButton>
-                                                </>
-                                            }
-                                            <IconButton size="small" onClick={()=>openCreateDialog(parentChild.childComment, comment)}>
-                                                <ReplyRoundedIcon sx={{ 
-                                                    color:"primary.contrastText", 
-                                                    fontSize:18
-                                                }} />
-                                            </IconButton>
+                                            <Typography variant="subtitle2" textAlign={"right"} sx={{px:1, fontStyle: "italic"}}>
+                                                {dayjs(parentChild.childComment.createdAt).format("DD/MM/YYYY")}
+                                            </Typography>
                                         </Paper>
                                         <Box sx={{display: "flex", flexDirection: "column", width: "100%"}}>
                                             <Typography variant="subtitle2" textAlign={"justify"} sx={{px:1, fontStyle:parentChild.childComment.isHidden?"italic":"normal"}}>
@@ -392,9 +415,36 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
                                                  :<> {parentChild.childComment.content}</>
                                                  }
                                             </Typography>
-                                            <Typography variant="subtitle2" textAlign={"right"} sx={{px:1, fontStyle: "italic"}}>
-                                                {dayjs(parentChild.childComment.createdAt).format("DD/MM/YYYY")}
-                                            </Typography>
+                                            {parentChild.childComment.userId === currentUserId ? 
+                                            <Box sx={{display: "flex", width: "100%", justifyContent: "flex-end"}}>                                        
+                                                <IconButton size="small" onClick={()=>openEditDialog(parentChild.childComment, comment)}>
+                                                    <EditRoundedIcon sx={{ 
+                                                        color: "primary.dark",
+                                                        fontSize: 18
+                                                    }}/>
+                                                </IconButton>    
+                                                <IconButton size="small" onClick={()=>openDeleteDialog(parentChild.childComment, comment)}>
+                                                    <DeleteForeverRoundedIcon sx={{ 
+                                                        color:"error.main", 
+                                                        fontSize:18
+                                                    }} />
+                                                </IconButton>
+                                                <IconButton size="small" onClick={()=>openCreateDialog(parentChild.childComment, comment)}>
+                                                    <ReplyRoundedIcon sx={{ 
+                                                        color:"primary.dark", 
+                                                        fontSize:18
+                                                    }} />
+                                                </IconButton>
+                                            </Box>
+                                            :  <Box sx={{display: "flex", width: "100%", justifyContent: "flex-end"}}>                  
+                                                <IconButton size="small" onClick={()=>openCreateDialog(parentChild.childComment, comment)}>
+                                                    <ReplyRoundedIcon sx={{ 
+                                                        color:"primary.dark", 
+                                                        fontSize:18
+                                                    }} />
+                                                </IconButton>
+                                            </Box>
+                                            }
                                         </Box>
                                     </Box>
                             
@@ -408,8 +458,9 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
                 PaperProps={{
                     sx: {
                         maxHeight: '80vh', 
-                        width: "85vw",
-                        maxWidth: "450px"
+                        width: "100vw",
+                        maxWidth: "450px",
+                        margin: 0
                     }
                 }} 
             >
@@ -440,19 +491,24 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
                     <Typography>¿Seguro que quieres borrar tu comentario?</Typography>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={closeDeleteDialog}>Cancelar</Button>
-                    <Button onClick={handleDeleteComment} variant="contained" color="error">Borrar</Button>
+                    <Button onClick={closeDeleteDialog}>No</Button>
+                    <Button onClick={handleDeleteComment} variant="contained">Sí</Button>
                 </DialogActions>
             </Dialog>
             <Dialog open={showCreateDialog} onClose={closeCreateDialog}
             PaperProps={{
                 sx: {
                     maxHeight: '80vh', 
-                    width: "85vw",
-                    maxWidth: "450px"
+                    width: "100vw",
+                    maxWidth: "450px",
+                    margin: 0
                 }
             }} >
-                <DialogTitle>Nuevo comentario</DialogTitle>
+                <DialogTitle> 
+                    {selectedComment 
+                        ? <>Respondiendo a {selectedComment.user.name}</>
+                        : <>Nuevo comentario</>}
+                    </DialogTitle>
                 <DialogContent>
                     <TextField
                         label="Comentario"
@@ -475,8 +531,6 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
             </Dialog>
             </>
         }
-            
-            
         </Box>
     </>
     )

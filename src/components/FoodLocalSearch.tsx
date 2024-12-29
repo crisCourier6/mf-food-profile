@@ -1,18 +1,27 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import api from '../api';
 import { FoodLocal } from '../interfaces/foodLocal';
 import { UserRatesFood } from '../interfaces/userRatesFood';
 import { Box, Card, CardContent, CardMedia, Grid, IconButton, Typography, Alert, Button, 
     Dialog, DialogActions, DialogContent, InputAdornment, TextField, Snackbar, SnackbarCloseReason, 
-    InputLabel, Select, OutlinedInput, Chip, MenuItem, DialogTitle, CircularProgress } from '@mui/material';
+    InputLabel, Select, OutlinedInput, Chip, MenuItem, DialogTitle, CircularProgress, 
+    Divider, Pagination, Accordion, AccordionSummary,
+    AccordionDetails,
+    Checkbox,
+    FormGroup,
+    FormControlLabel} from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useLocation, useNavigate } from 'react-router-dom';
 import NoPhoto from "../../public/no-photo.png"
-import ClearIcon from '@mui/icons-material/Clear'; // Import the clear icon
 import FoodRate from './FoodRate';
 import ImagesScores from '../images/ImagesScores';
+import CloseIcon from '@mui/icons-material/Close';
 import FoodCommentsCount from './FoodCommentsCount';
-
-type Allergen = { id: string; name: string};
+import NavigateBack from './NavigateBack';
+import ScannerIcon from '../svgs/ScannerIcon';
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import SearchIcon from '@mui/icons-material/Search';
+import { Allergen } from '../interfaces/allergen';
 
 const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible }) => {
     const navigate = useNavigate()
@@ -24,16 +33,22 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
     const getFoodLocalURL = "/food/local"
     const allergensURL = "/food/allergens"
     const [allergensAll, setAllergensAll] = useState<Allergen[]>([])
+    const usedAllergens = ["en:gluten", "en:milk", "en:eggs", "en:nuts", "en:peanuts", "en:sesame-seeds", 
+        "en:soybeans", "en:celery", "en:mustard", "en:lupin", "en:fish", "en:crustaceans", 
+        "en:molluscs", "en:sulphur-dioxide-and-sulphites"]
     const [foods, setFoods] = useState<FoodLocal[]>([])
     const [foodsFiltered, setFoodsFiltered] = useState<FoodLocal[]>([])
     const [searchQuery, setSearchQuery] = useState("");
     const [isSearching, setIsSearching] = useState(false)
-    const [codeQuery, setCodeQuery] = useState("")
     const [lacksAllergens, setLacksAllergens] = useState<Allergen[]>([])
     const [containsAllergens, setContainsAllergens] = useState<Allergen[]>([])
-    const [filter, setFilter] = useState("all")
+    const [dummySearch, setDummySearch] = useState("")
     const [successOpen, setSuccessOpen] = useState(false)
+    const [page, setPage] = useState(1)
+    const [limit, setLimit] = useState(10)
     const [allDone, setAllDone] = useState(false)
+    const [resultsTotal, setResultsTotal] = useState(0)
+    const textFieldRef = useRef<HTMLInputElement>(null); // Create a ref to the TextField
 
     useEffect(()=>{
         document.title = "Búsqueda - EyesFood";
@@ -44,7 +59,15 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
             }
         })
         .then(response => {
-            setAllergensAll(response.data);
+            let newAllergens:Allergen[] = []
+            let foodPrefsArray = userFoodPrefs?.split(",") || []
+
+            for (let allergen of response.data){
+                if (usedAllergens.includes(allergen.id)){
+                    newAllergens.push(allergen)
+                }
+            }
+            setAllergensAll(newAllergens)
         })
         .catch(error=>{
             console.log(error)
@@ -58,10 +81,10 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
         const search = searchParams.get('search') || "";
         const la = searchParams.get('la') || "";
         const ca = searchParams.get('ca') || "";
-        const id = searchParams.get('id') || "";
+        const oldPage = searchParams.get("page") || page;
+        setPage(Number(oldPage))
 
         setSearchQuery(search);
-        setCodeQuery(id);
 
         const lacksAllergenIds = la.split(',').filter(id => id); // filter out empty values
         const containsAllergenIds = ca.split(',').filter(id => id);
@@ -72,7 +95,7 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
         setLacksAllergens(lacksAllergensMatch);
         setContainsAllergens(containsAllergensMatch);
 
-        if (search || lacksAllergenIds.length > 0 || containsAllergenIds.length > 0 || id) {
+        if (search || lacksAllergenIds.length > 0 || containsAllergenIds.length > 0) {
         
             api.get(`${getFoodLocalURL}?${searchParams.toString()}`, {
                 withCredentials: true,
@@ -81,11 +104,13 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
                 }
             })
             .then(res => {
-                const updatedData = res.data.map((food:any) => {
+                const updatedData = res.data.results.map((food:any) => {
                     let userRating = food.userRatesFood[0]
                     return {...food, userRatesFood: userRating}
                 })
                 setFoods(updatedData)
+                setFoodsFiltered(updatedData)
+                setResultsTotal(res.data.total)
             })
             .catch(error=>{
                 console.log(error)
@@ -98,24 +123,11 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
         else {
             // If no parameters, reset foods to empty or a default state
             setFoods([]);
-            setAllDone(true); // Set to true if you want to indicate loading is complete
             setIsSearching(false)
         }
             
   
-    }, [location.search, allergensAll])
-
-    useEffect(() => {
-        if (filter === 'all') {
-            setFoodsFiltered(foods);
-        } 
-        else {
-          setFoodsFiltered(foods.filter((food:FoodLocal) => {
-            return food.userRatesFood?.rating === filter     
-        }));
-        }
-        
-      }, [foods]);
+    }, [location.search, page])
 
     useEffect(()=>{
         setTimeout(() => {
@@ -123,24 +135,14 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
         }, 100); // Adjust the delay as needed
     }, [foodsFiltered])
 
-    // const handleFilterChange = (event: React.MouseEvent<HTMLElement>, newFilter:string) => {
-    //     if (newFilter === null) {
-    //         return;
-    //       }
-    //     setFilter(newFilter);
-    
-    //     // Filter data based on the selected value
-    //     if (newFilter === 'all') {
-    //         setFoodsFiltered(foods);
-    //     } 
-    //     else {
-    //         setFoodsFiltered(foods.filter(item => item.userRatesFood?.rating === newFilter));
-    //     }
-    // };
-
-    const handleSearch = () => {
+    const handleSearch = (page: number, isPrevQuery:boolean) => {
         let queryParams = new URLSearchParams(location.search);
         queryParams.set("wr", "true")
+        queryParams.set("page", page.toString()); // Add page query parameter
+        queryParams.set("limit", limit.toString())
+        if (isPrevQuery){
+            return navigate(`/search?${queryParams.toString()}`, {replace:true});
+        }
         if (currentUserId){
             queryParams.set("wu", currentUserId)
         }
@@ -148,33 +150,44 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
         if (searchQuery!=""){
             queryParams.set('search', searchQuery);
         }
+        else{
+            queryParams.delete("search")
+        }
         if (lacksAllergens.length>0){
             const allergenIds = lacksAllergens.map(allergen => allergen.id).join(",");
             queryParams.set('la', allergenIds);
+        }
+        else{
+            queryParams.delete("la")
         }
         if (containsAllergens.length>0){
             const allergenIds = containsAllergens.map(allergen => allergen.id).join(",");
             queryParams.set('ca', allergenIds);
         }
-        if (codeQuery!=""){
-            queryParams.set('id', codeQuery);
+        else{
+            queryParams.delete("ca")
         }
-        
-        navigate(`/search?${queryParams.toString()}`);
+        navigate(`/search?${queryParams.toString()}`, {replace:true});
         
     }
 
     const handleKeyDown = (event:any) => {
         if (event.key === "Enter" && searchQuery.length>1) {
             event.target.blur()
-            return handleSearch()
+            return handleSearch(page, false)
         }
     };
 
     const handleClear = () => {
         setSearchQuery('')
-        navigate(`/search`);
+        if (textFieldRef.current) {   // Focus the TextField
+            textFieldRef.current.focus();
+        }
     }
+
+    const handleScan = () => {
+        navigate("/scan")
+      }
 
     const handleFoodClick = (id:string) => {
         navigate("/food/" + id)
@@ -190,6 +203,20 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
     
         setSuccessOpen(false);
       }
+
+      const handleSwitchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setAllergensAll((prevAllergens) => {
+            const updatedAllergens = prevAllergens.map((allergen) =>
+                allergen.id === event.target.id
+                    ? { ...allergen, selected: !allergen.selected }
+                    : allergen
+            );
+            // Update lacksAllergens directly within the same operation
+            const selectedAllergens = updatedAllergens.filter((allergen) => allergen.selected);
+            setLacksAllergens(selectedAllergens);
+            return updatedAllergens; // Return the updated array for state
+        });
+      };
 
     const onRatingChange = (oldFood: FoodLocal, newRating : UserRatesFood) => {
         if(oldFood.userRatesFood){
@@ -287,17 +314,39 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
     const handleResetFilters = () => {
         setLacksAllergens([])
         setContainsAllergens([])
-        setCodeQuery("")
+        const newAllergensAll = allergensAll.map(allergen => ({
+            ...allergen,
+            selected: false
+        }));
+
+        // Update state
+        setAllergensAll(newAllergensAll);
     }
+
+    const handlePageChange = (event:any, value:number) => {
+        setPage(value);
+        handleSearch(value, true)
+    };
 
     const handleFillUserPrefs = () => {
 
         if (userFoodPrefs){
-            let foodPrefsArray = userFoodPrefs.split(",")
+            let foodPrefsArray = userFoodPrefs.split(",");
+        
+            // Find allergens that match the user's preferences
             const matchingAllergens = allergensAll.filter(allergen => 
                 foodPrefsArray.includes(allergen.id)
             );
-            setLacksAllergens(matchingAllergens)
+    
+            // Update the allergensAll with the correct 'selected' value
+            const newAllergensAll = allergensAll.map(allergen => ({
+                ...allergen,
+                selected: foodPrefsArray.includes(allergen.id)
+            }));
+    
+            // Update state
+            setAllergensAll(newAllergensAll);
+            setLacksAllergens(matchingAllergens);
         }
     }
 
@@ -310,10 +359,10 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
                     height:"100%",
                     gap:1
                 }}>
-                    {scores.map((score, i)=>{
+                    {scores.map((score, index)=>{
                         return (
                             <Box
-                                key={i}
+                                key={index}
                                 component="img"
                                 sx={{
                                     height: "95%",
@@ -328,12 +377,12 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
         )
     }
 
-    return ( allDone?
+    return (
         <Grid container display="flex" 
         flexDirection="column" 
         justifyContent="center"
         alignItems="center"
-        sx={{width: "100vw", maxWidth:"500px", gap:2, flexWrap: "wrap", pb: 7}}
+        sx={{width: "100vw", maxWidth:"500px", gap:1, flexWrap: "wrap"}}
         >
             <Box 
                 sx={{
@@ -346,51 +395,48 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
                     zIndex: 100,
                     boxShadow: 3,
                     display: "flex",
-                    flexDirection: "column",
+                    flexDirection: "row",
                     alignItems: "center",
                     borderBottom: "5px solid",
                     borderLeft: "5px solid",
                     borderRight: "5px solid",
                     borderColor: "secondary.main",
+                    color: "primary.contrastText",
                     boxSizing: "border-box"
                   }}
             >
-                <Typography variant='h5' width="100%"  color="primary.contrastText" sx={{py:1, borderLeft: "3px solid",
-                    borderRight: "3px solid",
-                    borderColor: "secondary.main",
-                    boxSizing: "border-box",
-                }}>
-                    Búsqueda
-                </Typography>
-                {/* <ToggleButtonGroup
-                    value={filter}
-                    exclusive
-                    onChange={handleFilterChange}
-                    aria-label="filter options"
-                    sx={{ width:"100%",display:"flex",flexDirection:"row",justifyContent:"center" }}
-                >
-                    <ToggleButton value="all" sx={{flex:1, fontSize:{xs:16, md:20}, py: 0.5}}>Todos</ToggleButton>
-                    <ToggleButton value="likes" sx={{flex:1, fontSize:{xs:16, md:20}, py: 0.5 }}>Me gustan</ToggleButton>
-                    <ToggleButton value="dislikes" sx={{flex:1, fontSize:{xs:16, md:20}, py: 0.5}}>No me gustan</ToggleButton>
-                </ToggleButtonGroup> */}
+                <Box sx={{display: "flex", flex: 1}}>
+                    <NavigateBack/>
+                </Box>
+                <Box sx={{display: "flex", flex: 4}}>
+                    <Typography variant='h6' width="100%"  color="primary.contrastText" sx={{py:1}}>
+                        Búsqueda
+                    </Typography>
+                </Box>
+                <Box sx={{display: "flex", flex: 1}}>
+                </Box>
             </Box>
 
             <Box sx={{
                 display: "flex",
                 flexDirection: "row",
                 justifyContent: "flex-start",
+                alignItems: "center",
                 width: "90%",
                 gap:2
+                
             }}>
                 <TextField 
                     value={searchQuery}
                     inputProps = {{maxLength: 100}}
+                    type="search"
                     onChange={(e)=>setSearchQuery(e.target.value)}
                     placeholder="Nombre o marca"
                     variant="standard"
                     fullWidth
+                    inputRef={textFieldRef}  // Attach ref to TextField
                     onKeyDown={handleKeyDown}
-                    sx={{mt: 0.5, maxWidth: "90%"}}
+                    sx={{maxWidth: "80%"}}
                     InputProps={{
                         endAdornment: (
                             searchQuery && (
@@ -399,167 +445,137 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
                                         onClick={handleClear} // Clear the input
                                         edge="end"
                                     >
-                                        <ClearIcon />
+                                        <CloseIcon />
                                     </IconButton>
                                 </InputAdornment>
                             )
                         ),
                     }}
                 />
-                <Button variant="outlined" onClick={() => setOpenDialog(true)}>
-                    Filtros
+                <IconButton 
+                onClick={()=>handleSearch(1, false)} 
+                disabled={searchQuery.length<1 
+                            && containsAllergens.length===0 
+                            && lacksAllergens.length===0 
+                }
+                size='medium'
+                >
+                    <SearchIcon fontSize='large' 
+                    sx={{
+                        color: searchQuery.length>0?"primary.main":"default"}}
+                    />
+                </IconButton> 
+                
+            </Box>
+            <Box sx={{display: "flex", width: "100%", justifyContent: "flex-start", alignItems: "center"}}>
+                <Button onClick={()=>setOpenDialog(true)}>
+                    <FilterAltIcon sx={{color: lacksAllergens.length===0? "primary.main" : "secondary.main"}}/>
+                    <Typography variant='subtitle2' sx={{textDecoration: "underline"}}>
+                        Filtros
+                    </Typography>
+                </Button>
+                
+                {/* {lacksAllergens.length===0 && 
+                <IconButton onClick={()=>setLacksAllergens([])}>
+                    <CloseIcon/>
+                </IconButton>
+
+                } */}
+                <Divider orientation='vertical' flexItem/>
+                <Button onClick={handleScan}>
+                    <ScannerIcon width={"24px"} height={"24px"} />
+                    <Typography variant='subtitle2' sx={{textDecoration: "underline"}}>
+                        Escanear producto
+                    </Typography>
                 </Button>
             </Box>
-            <Button onClick={handleSearch} disabled={searchQuery.length<1 && containsAllergens.length===0 && lacksAllergens.length===0 && codeQuery.length===0} variant='contained'>
-                Buscar
-            </Button>
+
             <Dialog open={openDialog} onClose={() => setOpenDialog(false)} PaperProps={{
             sx: {
                 maxHeight: '80vh', 
-                width: "95vw",
-                maxWidth: "500px"
+                width: "100vw",
+                maxWidth: "500px",
+                margin: "auto"
             }}}> 
-                <DialogTitle>Opciones</DialogTitle>
+                <DialogTitle>
+                    <Box sx={{display:"flex", justifyContent: "space-between"}}>
+                        Filtros
+                        {/* <IconButton
+                        color="inherit"
+                        onClick={()=>setOpenDialog(false)}
+                        sx={{p:0}}
+                        >
+                            <CloseIcon />
+                        </IconButton> */}
+                    </Box>
+                </DialogTitle>
                 <DialogContent sx={{display: "flex", flexDirection: "column", gap:2}}>
-                        <InputLabel id="demo-multiple-chip-label">Contiene o puede contener</InputLabel>
-                        <Select
-                        variant='standard'
-                        labelId="demo-multiple-chip-label"
-                        id="demo-multiple-chip"
-                        multiple
-                        fullWidth
-                        value={containsAllergens.map(a => a.id)}
-                        onChange={handleContainsAllergensChange}
-                        input={<OutlinedInput id="select-multiple-chip" label="Chip" />}
-                        MenuProps={{
-                            PaperProps: {
-                                style: {
-                                    maxHeight: 200, // Set your desired max height here
-                                    overflowY: 'auto', // Enable scrolling if items exceed max height
-                                },
-                            },
-                        }}
-                        sx={{
-                            maxHeight: 100, // Set your desired max height here for the input
-                            overflow: 'hidden', // Prevent overflow if the content exceeds max height
-                        }}
-                        renderValue={(selected) => (
-                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                {selected.map((id) => {
-                                    const allergen = allergensAll.find(a => a.id === id); // Find the full object
-                                    return <Chip key={id} label={allergen?.name} />;
-                                })}
-                            </Box>
-                        )}
-                        >
-                        {allergensAll.map((allergen) => (
-                            <MenuItem
-                            key={allergen.id}
-                            value={allergen.id}
-                            sx={{
-                                fontSize: 14
-                            }}
-                            >
-                            {allergen.name}
-                            </MenuItem>
-                        ))}
-                        </Select>
-
-                        <InputLabel id="demo-multiple-chip-label">No debe contener</InputLabel>
-                        <Select
-                        labelId="demo-multiple-chip-label"
-                        id="demo-multiple-chip"
-                        multiple
-                        fullWidth
-                        value={lacksAllergens.map(a => a.id)}
-                        onChange={handleLacksAllergensChange}
-                        input={<OutlinedInput id="select-multiple-chip" label="Chip" />}
-                        MenuProps={{
-                            PaperProps: {
-                                style: {
-                                    maxHeight: 200, // Set your desired max height here
-                                    overflowY: 'auto', // Enable scrolling if items exceed max height
-                                },
-                            },
-                        }}
-                        sx={{
-                            display: "flex",
-                            justifyContent: "flex-start",
-                            alignItems: "flex-start",
-                            maxHeight: 100,
-                            overflowY: "scroll", // Prevent overflow if the content exceeds max height
-                        }}
-                        renderValue={(selected) => (
-                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                {selected.map((id) => {
-                                    const allergen = allergensAll.find(a => a.id === id); // Find the full object
-                                    return <Chip key={id} label={allergen?.name} />;
-                                })}
-                            </Box>
-                        )}
-                        >
-                        {allergensAll.map((allergen) => (
-                            <MenuItem
-                            key={allergen.id}
-                            value={allergen.id}
-                            sx={{
-                                fontSize: 14
-                            }}
-                            >
-                            {allergen.name}
-                            </MenuItem>
-                        ))}
-                        </Select>
-                        <Button variant='inverted' sx={{padding: 0.5}} disabled={!userFoodPrefs} onClick={handleFillUserPrefs}>
+                        
+                        <Typography variant='subtitle1'>
+                            Buscar alimentos:
+                        </Typography>
+                        <FormGroup>
+                        {allergensAll.map(allergen => {
+                            return (
+                                <FormControlLabel 
+                                key={allergen.id} 
+                                control={
+                                    <Checkbox 
+                                        id={allergen.id.toString()}
+                                        checked={!!allergen.selected}
+                                        onChange={handleSwitchChange}
+                                        size="small"
+                                    />
+                                } 
+                                label={
+                                    <Typography variant="subtitle2" textAlign={"left"}>
+                                        Sin {allergen.name}
+                                    </Typography>
+                                }/>
+                            )
+                        })}
+                        </FormGroup>
+                        
+                    </DialogContent>
+                    <DialogActions>
+                    <Button variant='inverted' sx={{padding: 0.5}} disabled={!userFoodPrefs} onClick={handleFillUserPrefs}>
                             <Typography variant='subtitle2'>
-                                Usar preferencias personales
+                                Rellenar con mis preferencias
                             </Typography>
                             
                         </Button>
-                    <TextField 
-                            value={codeQuery}
-                            onChange={(e)=>setCodeQuery(e.target.value)}
-                            placeholder="Código de barras"
-                            inputProps = {{maxLength: 20}}
-                            variant="standard"
-                            fullWidth
-                            sx={{mt: 0.5, maxWidth: "100%"}}
-                            InputProps={{
-                                endAdornment: (
-                                    searchQuery && (
-                                        <InputAdornment position="end">
-                                            <IconButton
-                                                onClick={() => setCodeQuery('')} // Clear the input
-                                                edge="end"
-                                            >
-                                                <ClearIcon />
-                                            </IconButton>
-                                        </InputAdornment>
-                                    )
-                                ),
-                            }}
-                        />
-                    </DialogContent>
-                    <DialogActions>
-                    <Button onClick={handleResetFilters} color="primary">
+                        <Button onClick={()=>{
+                            handleResetFilters()
+                        }} color="primary">
                             Limpiar
                         </Button>
-                        <Button variant={"contained"} onClick={() => setOpenDialog(false)} color="primary">
+                        <Button onClick={()=>{
+                            setOpenDialog(false)
+                            handleSearch(1, false)
+                        }} variant="contained" color="primary">
                             Guardar
                         </Button>
-                        
                     </DialogActions>
                 </Dialog>
-            {allDone && <Typography variant='subtitle2'>{foodsFiltered.length} resultados</Typography>}
+            {allDone 
+                ?   foodsFiltered.length>0 
+                    ?   <Typography variant='subtitle2'>
+                            {(page*limit-limit)+1}-{Math.min(page*limit, resultsTotal)} de {resultsTotal} resultados
+                        </Typography>
+                    :   <Typography variant='subtitle2'>
+                            No hay resultados
+                        </Typography>
+                :   <></>
+            }
             {!isSearching 
-                ? foodsFiltered.map((food)=>{
+                ? foodsFiltered.map((food, index)=>{
                     return (
-                    <Card key={food.id} sx={{
+                    <Card key={index} sx={{
                     border: "4px solid", 
                     borderColor: "primary.dark", 
                     bgcolor: "primary.contrastText",
-                    width:"90%", 
-                    height: "15vh", 
+                    width:"95%", 
+                    height: 80, 
                     minHeight: "80px",
                     maxHeight: "120px", 
                     display:"flex",
@@ -578,17 +594,27 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
                         alignItems: "center",
                         padding:0,
                         }}>
-                            <Typography 
-                            variant="body2" 
-                            color="primary.dark" 
-                            fontSize={15} 
-                            fontFamily="Montserrat"
-                            width="100%" 
-                            height="60%" 
-                            sx={{alignContent:"center", borderBottom: "4px solid", borderColor: "primary.main", cursor:"pointer"}}
-                            onClick={()=> handleFoodClick(food.id)}>
-                                {food.name}
-                            </Typography>
+                            <Box sx={{
+                            width:"100%", 
+                            display:"flex", 
+                            flexDirection: "row",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            height: "60%",
+                            borderBottom: "4px solid", 
+                            borderColor: "primary.dark", 
+                            cursor:"pointer"
+                            }}>
+                                 <Typography 
+                                variant="subtitle2" 
+                                width="95%" 
+                                height="60%" 
+                                sx={{alignContent:"center", }}
+                                onClick={()=> handleFoodClick(food.id)}>
+                                    {food.name}
+                                </Typography>
+                            </Box>
+                           
                             <Box sx={{
                             width:"100%", 
                             display:"flex", 
@@ -609,7 +635,55 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
                         </CardContent>
                     </Card>
                     )})
+                    
                 : <CircularProgress/>
+            }
+            {
+                foodsFiltered.length>0 && resultsTotal>limit &&
+                <Box 
+                sx={{
+                    bottom: 0,
+                    width:"100%",
+                    maxWidth: "500px",
+                    transition: "top 0.1s",
+                    backgroundColor: 'primary.dark', // Ensure visibility over content
+                    zIndex: 100,
+                    boxShadow: 3,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    borderTop: "3px solid",
+                    borderLeft: "3px solid",
+                    borderRight: "3px solid",
+                    borderColor: "secondary.main",
+                    color: "primary.contrastText",
+                    boxSizing: "border-box"
+                  }}
+                >
+                    <Pagination count={Math.ceil(resultsTotal/limit)}
+                    page={page}
+                    onChange={handlePageChange}
+                    color='secondary'
+                    boundaryCount={1}
+                    siblingCount={0}
+                    sx={{
+                        '& .MuiPaginationItem-root': {
+                            color: 'primary.contrastText', // Color for normal page numbers
+                        },
+                        '& .MuiPaginationItem-root.Mui-selected': {
+                            color: 'secondary.contrastText', // Text color for active page
+                        },
+                        '& .MuiPaginationItem-ellipsis': {
+                            color: 'primary.contrastText', // Color for ellipsis
+                        },
+                        '& .MuiPaginationItem-root:hover': {
+                            backgroundColor: 'primary.contrastText', // Hover color for page numbers
+                            color: "primary.dark"
+                        }
+                    }}
+                    />
+                </Box>
+                
             }
             <Snackbar
                 open = {successOpen}
@@ -635,9 +709,7 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
                 </Alert>
             </Snackbar>  
    
-        </Grid>
-        
-        :<CircularProgress/>   
+        </Grid> 
     )
 }
 

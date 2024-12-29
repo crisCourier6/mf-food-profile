@@ -2,9 +2,10 @@ import React, { useRef, useEffect, useState } from 'react';
 import api from '../api';
 import { FoodLocal } from '../interfaces/foodLocal';
 import { useNavigate, useParams } from "react-router-dom"
-import { Box, Button, IconButton, Paper, Card, CardMedia, CardContent, Grid, Typography, Backdrop, 
+import { Box, Button, IconButton, Paper, Card, CardMedia, CardContent, Grid, Typography, 
     Dialog, DialogContent, DialogContentText, DialogActions, DialogTitle, TableContainer, Table, 
-    TableHead, TableCell, TableRow, TableBody } from '@mui/material';
+    TableHead, TableCell, TableRow, TableBody, 
+    Divider} from '@mui/material';
 import Carousel from 'react-material-ui-carousel';
 import NoPhoto from "../../public/no-photo.png"
 import "./Components.css"
@@ -15,10 +16,17 @@ import FoodComments from './FoodComments';
 import FoodAdditive from './FoodAdditive';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import LaunchRoundedIcon from '@mui/icons-material/LaunchRounded';
-import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
+import EditIcon from '@mui/icons-material/Edit';
 import FoodRate from './FoodRate';
 import { UserRatesFood } from '../interfaces/userRatesFood';
 import FoodCommentsCount from './FoodCommentsCount';
+import NavigateBack from './NavigateBack';
+import HistoryIcon from '@mui/icons-material/History';
+import CloseIcon from '@mui/icons-material/Close';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import { FoodHasAllergen } from '../interfaces/foodHasAllergen';
+import { FoodHasAdditive } from '../interfaces/foodHasAdditive';
 
 type NutritionValues = {
     id: string,
@@ -40,9 +48,9 @@ const ImageDisplay = (props:ImageDisplayProps) =>{
     }
     return (
         <>
-        <Card sx={{border: "5px solid", borderColor: "primary.main", height:250, bgcolor: "primary.light", display: "flex", flexDirection:"column"}}>
+        <Card sx={{height:200, maxHeight: "500px", width:"100%", maxWidth: "500px", display: "flex", flexDirection:"column"}}>
             <CardMedia component="img" sx={{
-            height: "95%", 
+            height: "90%", 
             borderBottom: "5px solid", 
             borderColor: "primary.main", 
             cursor :"pointer",
@@ -53,80 +61,57 @@ const ImageDisplay = (props:ImageDisplayProps) =>{
                 title={props.image.alt}
                 onClick={handleImageOpen}>      
             </CardMedia>
-            <CardContent sx={{bgcolor: "primary.main", display:"flex", alignItems: "center", justifyContent: "center", height: "5%"}}>
+            <CardContent sx={{bgcolor: "primary.main", display:"flex", alignItems: "center", justifyContent: "center", height: "10%"}}>
                 <Typography variant="h6" color="primary.contrastText">
                     {props.image.alt}
                 </Typography>
             </CardContent>
         </Card>
-        <Backdrop open={showImage} onClick={handleImageClose} 
-        sx={{width: "100vw"}}
-        >
-            <Dialog open={showImage} onClose={handleImageClose} scroll='paper' 
-                        
-                        PaperProps={{
-                            sx: { 
-                              width: "90vw", 
-                              margin: "auto"
-                            }
-                          }}>
-                        <DialogContent>
-                            <img
-                                src={props.image.img}
-                                alt={props.image.alt}
-                                style={{ width: '100%', height: 'auto' }}
-                            />
-                        </DialogContent>
-                        <DialogActions>
-                            <Button sx={{
-                                color: "primary.contrastText", 
-                                bgcolor: "primary.main", 
-                                "&:hover": {
-                                    color: "secondary.contrastText", 
-                                    bgcolor: "secondary.main", 
-                                }
-                            }} 
-                            onClick={handleImageClose}>
-                                Cerrar
-                            </Button>
-                        </DialogActions>
-            </Dialog>
-        </Backdrop>
+        <Dialog open={showImage} onClose={handleImageClose} scroll='paper'   
+        PaperProps={{
+            sx: { 
+                width: "90vw", 
+                maxWidth: "400px",
+                margin: 0
+            }
+        }}>
+            <DialogTitle>
+                <Box sx={{display:"flex", justifyContent: "space-between"}}>
+                    {props.image.alt}
+                    <IconButton
+                    color="inherit"
+                    onClick={handleImageClose}
+                    sx={{p:0}}
+                    >
+                        <CloseIcon />
+                    </IconButton>
+                </Box>
+            </DialogTitle>
+            <DialogContent>
+                <img
+                    src={props.image.img}
+                    alt={props.image.alt}
+                    style={{ width: '100%', height: 'auto' }}
+                />
+            </DialogContent>
+        </Dialog>
         </>
     )
 }
 
-const allergensEngSpa: {[key: string]: string} = {
-    "en:gluten": "Gluten",
-    "en:eggs": "Huevos",
-    "en:milk": "Leche",
-    "en:nuts": "Frutos secos",
-    "en:peanuts": "Maní",
-    "en:sesame_seeds": "Sésamo",
-    "en:soybeans": "Soya",
-    "en:celery": "Apio",
-    "en:mustard": "Mostaza",
-    "en:lupin": "Altramuces",
-    "en:fish": "Pescado",
-    "en:crustaceans": "Crustáceos",
-    "en:molluscs": "Moluscos",
-    "en:sulphur-dioxide-and-sulphites": "Anhídrico sulfuroso",
-    "en:matsutake": "Matsutake",
-    "en:yamaimo" : "Yamaimo",
-    "en:kiwi" : "Kiwi",
-    "en:peach" : "Durazno",
-    "en:gelatin" : "Gelatina",
-    "en:pork" : "Cerdo",
-    "en:banana" : "Plátano",
-    "en:beef" : "Carne de res",
-    "en:red-caviar" : "Caviar rojo",
-    "en:orange" : "Naranja",
-    "en:chicken" : "Pollo", 
-    "en:apple" : "Manzana"
-}
+type IconMappingKeys = "en:vegan" | "en:non-vegan" | "en:palm-oil" | "en:palm-oil-free" | "en:vegetarian" | "en:non-vegetarian";
 
-function Allergens(allergens:string[], traces:string[]){
-    if ((!allergens || allergens.length == 0 || allergens.includes("en:none")) && (!traces || traces.length == 0)){
+const iconMapping: Record<IconMappingKeys, JSX.Element> = {
+    "en:vegan": <Typography variant='h6' color={"secondary.dark"}>Vegano</Typography>,
+    "en:non-vegan": <Typography variant='h6' color={"warning.main"}>No vegano</Typography>,
+    "en:palm-oil": <Typography variant='h6' color={"warning.main"}>Contiene aceite de palma</Typography>,
+    "en:palm-oil-free": <Typography variant='h6' color={"secondary.dark"}>Sin aceite de palma</Typography>,
+    "en:vegetarian":<Typography variant='h6' color={"secondary.dark"}>Vegetariano</Typography>,
+    "en:non-vegetarian": <Typography variant='h6' color={"warning.main"}>No vegetariano</Typography> 
+};
+
+function Allergens(allergens:FoodHasAllergen[] | undefined){
+    if (!allergens || allergens.length===0){
         return (
             <Paper elevation={0} sx={{p:2}}>
                 <Typography variant='subtitle1' color= "primary.dark">
@@ -135,23 +120,26 @@ function Allergens(allergens:string[], traces:string[]){
             </Paper>
         )
     }
+    let trueAllergens = allergens.filter(allergen => allergen.isAllergen)
+    let traces = allergens.filter(allergen => allergen.isTrace)
+    
     
     return (
         <Paper elevation={0}>
             <ul style={{ paddingLeft: 10 }}>
-                {allergens.map(eng => {
+                {trueAllergens.map((trueAllergen, index) => {
                     return (
-                        <Typography key={eng} variant='subtitle1' color= "primary.dark">
-                            <li> {allergensEngSpa[eng] || ""}</li>
+                        <Typography key={index} variant='subtitle1' color= "primary.dark">
+                            <li> Contiene {trueAllergen.allergen.name || ""}</li>
                         </Typography>
                     )
                 })}       
             </ul>
             <ul style={{ paddingLeft: 10 }}>
-                {traces.map(eng => {
+                {traces.map((trace, index) => {
                     return (
-                        <Typography key={eng} variant='subtitle1' color= "primary.dark">
-                            <li> {allergensEngSpa[eng]? <>Puede contener {allergensEngSpa[eng].toLowerCase()}</>: ""}</li>
+                        <Typography key={index} variant='subtitle1' color= "primary.dark">
+                            <li> Puede contener {trace.allergen.name || ""}</li>
                         </Typography>
                     )
                 })}       
@@ -161,7 +149,7 @@ function Allergens(allergens:string[], traces:string[]){
     )
 }
 
-function Additives(additives:string[]){
+function Additives(additives:FoodHasAdditive[]|undefined){
     if (!additives || additives.length == 0){
         return (
             <Paper elevation={0} sx={{p:2}}>
@@ -180,9 +168,9 @@ function Additives(additives:string[]){
 function Ingredients(ingredients:string){
     if (!ingredients){
         return (
-            <Paper elevation={0} sx={{p:2}}>
+            <Typography color= "primary.dark" variant='subtitle1' textAlign={"center"} sx={{py:2}}>
                 Lista de ingredientes no registrada
-            </Paper>
+            </Typography>
         )
     }
     return (
@@ -198,7 +186,10 @@ function NutritionTable(nutritionValues:NutritionValues[]|undefined){
     if (!nutritionValues || nutritionValues.length == 0){
         return (
             <Paper elevation={0} sx={{p:2}}>
+                <Typography variant='subtitle1'>
                 Información nutricional no disponible
+                </Typography>
+                
             </Paper>
         )
     }
@@ -227,18 +218,18 @@ function NutritionTable(nutritionValues:NutritionValues[]|undefined){
                 </TableHead>
                 <TableBody>
                     {nutritionValues.map((nutriment, index)=> (
-                        <TableRow key={nutriment.id} sx={{ height: 30,  bgcolor: index % 2 === 0 ? "transparent" : "secondary.light"  }}>
-                        <TableCell sx={{ padding: '4px 8px' }}>
+                        <TableRow key={index} sx={{ height: 30,  bgcolor: index % 2 === 0 ? "transparent" : "secondary.light"  }}>
+                        <TableCell key={nutriment.id} sx={{ padding: '4px 8px' }}>
                             <Typography variant='subtitle2'>
                                 <strong>{nutriment.id}</strong>
                             </Typography>
                         </TableCell>
-                        <TableCell align="right" sx={{ padding: '4px 8px' }}>
+                        <TableCell key={nutriment.hundred} align="right" sx={{ padding: '4px 8px' }}>
                             <Typography variant="subtitle2">
                                 <strong>{nutriment.hundred}</strong>
                             </Typography>
                         </TableCell>
-                        <TableCell align="right" sx={{ padding: '4px 8px' }}>
+                        <TableCell key={nutriment.serving} align="right" sx={{ padding: '4px 8px' }}>
                             <Typography variant="subtitle2">
                                 <strong>{nutriment.serving}</strong>
                             </Typography>
@@ -280,13 +271,15 @@ function Scores(scores:string[]){
     )
 }
 
-function UserFoodPrefs(foodAllergens:string[], foodTraces: string[]){
+function UserFoodPrefs(allergens:FoodHasAllergen[]){
     const foodPrefs =  window.sessionStorage.getItem("food-prefs") || window.localStorage.getItem("food-prefs")
     let userFoodPrefs:string[] = []
     if (foodPrefs){
         userFoodPrefs = foodPrefs.split(",")
     }
-    if ((!foodAllergens || foodAllergens.length == 0 || foodAllergens.includes("en:none")) && (!foodTraces || foodTraces.length == 0)){
+    let trueAllergens = allergens.filter(allergen => allergen.isAllergen)
+    let traces = allergens.filter(allergen => allergen.isTrace)
+    if ((allergens.length===0)){
         return (<></>)
     }
     return (<>
@@ -295,56 +288,90 @@ function UserFoodPrefs(foodAllergens:string[], foodTraces: string[]){
                 flexDirection:"row",
                 flexWrap: "wrap",
                 justifyContent: "space-around",
+                pt:1
             }}>
-                {userFoodPrefs.map(allergen=>{
+                {trueAllergens.map(allergen=>{
                     
-                        if(foodAllergens && foodAllergens.includes(allergen)){
+                        if(userFoodPrefs.includes(allergen.allergenId)){
                             return (
-                                <Box key={allergen} sx={{
+                                <Box key={allergen.allergenId} sx={{
                                     display:"flex",
                                     flexDirection:"column",
                                     justifyContent: "center",
                                     alignItems: "center",
-                                    width: "30%",
+                                    width: "50%",
                                     pb:1,
                                     gap:1
                                 }}>
                                     <Box
                                         component="img"
-                                        alt={allergen}
-                                        sx={{width:"80%"}}
-                                        src={ImagesAllergens[allergen]}
+                                        alt={allergen.allergenId}
+                                        sx={{width:"50%"}}
+                                        src={ImagesAllergens[allergen.allergenId]}
                                     />
                                     <Typography textAlign="center" variant='subtitle1' fontWeight="bold" color="error">
-                                        Contiene {allergensEngSpa[allergen].toLowerCase()}
+                                        Contiene {allergen.allergen.name.toLowerCase()}
                                     </Typography>
                                 </Box>
                             )
-                        }
-                        else if(foodTraces && foodTraces.includes(allergen)){
-                            return (
-                                <Box sx={{
-                                    display:"flex",
-                                    flexDirection:"column",
-                                    justifyContent: "center",
-                                    alignItems: "center",
-                                    width: "30%",
-                                    pb:1
-                                }}>
-                                    <Box
-                                        component="img"
-                                        alt={allergen}
-                                        sx={{width: "80%"}}
-                                        src={ImagesAllergens[allergen]}
-                                    />
-                                   <Typography textAlign="center" variant='subtitle1' fontWeight="bold" color="warning.main">
-                                        Puede contener {allergensEngSpa[allergen].toLowerCase()}
-                                    </Typography>
-                                </Box>
-                            )
-                        }
-                })}
+                        }})}
+            {traces.map(allergen=>{
+                    
+                    if(userFoodPrefs.includes(allergen.allergenId)){
+                        return (
+                            <Box key={allergen.allergenId} sx={{
+                                display:"flex",
+                                flexDirection:"column",
+                                justifyContent: "center",
+                                alignItems: "center",
+                                width: "50%",
+                                pb:1,
+                                gap:1
+                            }}>
+                                <Box
+                                    component="img"
+                                    alt={allergen.allergenId}
+                                    sx={{width:"50%"}}
+                                    src={ImagesAllergens[allergen.allergenId]}
+                                />
+                                <Typography textAlign="center" variant='subtitle1' fontWeight="bold" color="warning.main">
+                                    Puede contener {allergen.allergen.name.toLowerCase()}
+                                </Typography>
+                            </Box>
+                        )
+                    }})}
             </Box>
+    </>
+    )
+}
+
+function IngredientsAnalysis(ingredientsAnalysis:string[]) {
+    return (<>
+        <Box sx={{
+            display:"flex",
+            flexDirection:"column",
+            flexWrap: "wrap",
+            justifyContent: "flex-start",
+            pt:1
+        }}>
+            {ingredientsAnalysis.map((item, index)=>{
+                if (!item.includes("unknown")){
+                    return (
+                        <Box key={index} sx={{
+                            display:"flex",
+                            flexDirection:"column",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            width: "100%",
+                            pb:1,
+                            gap:1
+                        }}>
+                            {iconMapping[item as IconMappingKeys]}
+                        </Box>
+                    )
+                }
+            })}
+        </Box>
     </>
     )
 }
@@ -359,14 +386,15 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
     const currentUserId = window.sessionStorage.getItem("id") || window.localStorage.getItem("id")
     const [foodExternalSingle, setFoodExternalSingle] = useState<FoodLocal|null>(null)
     const [foodFullName, setFoodFullName] = useState<string>("")
+    const [foodIngredientsAnalysis, setFoodIngredientsAnalysis] = useState<string[]>([])
     const [firstTime, setFirstTime] = useState("")
     const [imageArr, setImageArr] = useState([{img:"",alt:""}])
     const [nutritionRows, setNutritionRows] = useState<NutritionValues[]>()
     const [showQuickLookInfo, setShowQuickLookInfo] = useState(false)
     const [animation, setAnimation] = useState<string>("none")
-    const [transform, setTransform] = useState<string>("translatex(0px)")
+    const [transform, setTransform] = useState<string>("translatex(5px)")
     const commentsRef = useRef<HTMLDivElement>(null);
-    const [expandedComments, setExpandedComments] = useState(false);
+    const [expandedComments, setExpandedComments] = useState(true);
     const textRef = useRef<HTMLSpanElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const foodRatingsURL = "/food/ratings"
@@ -388,7 +416,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
             
         }
         if (containerRef.current) {
-            fullContainerWidth = containerRef.current.clientWidth;
+            fullContainerWidth = containerRef.current.clientWidth - 40;
             
         }
         if (fullTextWidth  !== 0 && fullContainerWidth !== 0){
@@ -434,6 +462,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                      newUserRatesFood = {userId: currentUserId, foodLocalId: response.data.id, rating: "neutral"}
                 }
                 let food = {...response.data, userRatesFood: newUserRatesFood}
+                console.log(response.data)
                 setFoodExternalSingle(food)
                 setFoodFullName(food.name)
                 document.title = `${food.foodData.product_name} - EyesFood`
@@ -451,12 +480,12 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                                             || food.foodData.selected_images.nutrition.display.fr
                                             || "noPhoto", alt:"Nutrición"}) 
                         : images.push({img:"noPhoto", alt:"Nutrición"})
-                    food.foodData.selected_images.packaging?.display
-                        ? images.push({img: food.foodData.selected_images.packaging.display.es
-                            || food.foodData.selected_images.packaging.display.en 
-                            || food.foodData.selected_images.packaging.display.fr
-                            || "noPhoto", alt:"Empaquetado"}) 
-                        : images.push({img:"noPhoto", alt:"Empaquetado"})
+                    // food.foodData.selected_images.packaging?.display
+                    //     ? images.push({img: food.foodData.selected_images.packaging.display.es
+                    //         || food.foodData.selected_images.packaging.display.en 
+                    //         || food.foodData.selected_images.packaging.display.fr
+                    //         || "noPhoto", alt:"Envasado"}) 
+                    //     : images.push({img:"noPhoto", alt:"Envasado"})
                     food.foodData.selected_images.ingredients?.display
                         ? images.push({img: food.foodData.selected_images.ingredients.display.es
                             || food.foodData.selected_images.ingredients.display.en 
@@ -466,9 +495,17 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                 }
                 else{
                     images.push({img:"noPhoto", alt:"Principal"})
-                    images.push({img:"noPhoto", alt:"Empaquetado"})
+                    images.push({img:"noPhoto", alt:"Envasado"})
                     images.push({img:"noPhoto", alt:"Nutrición"})
                     images.push({img:"noPhoto", alt:"Ingredientes"})
+                }
+
+                let ingredientsAnalysis = food.foodData.ingredients_analysis_tags
+                if (ingredientsAnalysis){
+                   setFoodIngredientsAnalysis(ingredientsAnalysis)
+                }
+                else{
+                    setFoodIngredientsAnalysis(["palm-oil-content-unknown", "vegan-status-unknown", "vegetarian-status-unknown"])
                 }
                 
                 setImageArr(images)
@@ -710,46 +747,51 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                     borderLeft: "5px solid",
                     borderRight: "5px solid",
                     borderColor: "secondary.main",
-                    boxSizing: "border-box"
+                    boxSizing: "border-box",
+                    color: "primary.contrastText"
                   }}
                 >
-                    <Box
-                    sx={{
-                        width: "100%", 
-                        overflow: "hidden", // Hide overflowed content
-                        whiteSpace: "nowrap", // Prevent text wrapping
-                        position: "relative", // For positioning animation
-                    }}
-                    >
-                        <Typography variant='h6' 
-                        ref={textRef}
-                        width="100%" 
-                        sx={{pt:1, 
-                            color: "primary.contrastText",
-                            display:"inline-block", 
-                            whiteSpace: "nowrap", 
-                            animation: animation,
-                                '@keyframes scroll-text': {
-                                    "0%": {
-                                        transform: `translateX(10px)`,
-                                    },
-                                    "25%": {
-                                        transform: `translateX(10px)`, 
-                                    },
-                                    "50%": {
-                                        transform: transform,
-                                    },
-                                    "75%": {
-                                        transform: transform, 
-                                    },
-                                    "100%": {
-                                        transform: `translateX(10px)`, 
-                                    },
-                                },   
-                        }}>
-                            {foodFullName}
-                        </Typography>
-                    </Box>   
+                    <Box sx={{display: "flex", alignItems: "flex-start", width:"100%"}}>
+                        <NavigateBack/>
+                        <Box
+                        sx={{
+                            width: "100%", 
+                            overflow: "hidden", // Hide overflowed content
+                            whiteSpace: "nowrap", // Prevent text wrapping
+                            position: "relative", // For positioning animation
+                        }}
+                        >
+                            <Typography variant='h6' 
+                                ref={textRef}
+                                width="100%" 
+                                sx={{pt:1, 
+                                    color: "primary.contrastText",
+                                    display:"inline-block", 
+                                    whiteSpace: "nowrap", 
+                                    animation: animation,
+                                        '@keyframes scroll-text': {
+                                            "0%": {
+                                                transform: `translateX(10px)`,
+                                            },
+                                            "25%": {
+                                                transform: `translateX(10px)`, 
+                                            },
+                                            "50%": {
+                                                transform: transform,
+                                            },
+                                            "75%": {
+                                                transform: transform, 
+                                            },
+                                            "100%": {
+                                                transform: `translateX(10px)`, 
+                                            },
+                                        },   
+                                }}>
+                                    {foodFullName}
+                            </Typography>
+                        </Box>   
+                    </Box>
+                    
                     <Box 
                     sx={{
                     display: "flex", 
@@ -769,23 +811,41 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                             justifyContent: "space-between",
                             height: "100%"
                         }}>
-                            <EditNoteRoundedIcon sx={{color: 'warning.main', fontSize: {sm: 25, xs: 20}}}/>
+                            <EditIcon sx={{color: 'warning.main', fontSize: {sm: 25, xs: 20}}}/>
                             <Typography 
                             variant='subtitle1' 
                             color="warning.main" 
                             fontSize={14}
                             textAlign={"justify"}
                             sx={{textDecoration: "underline"}}>
-                                Aportar/Editar
+                                Editar
                             </Typography>
                         </Button>
                     </Box>
                     
                 </Box>}
                 <Box sx={{
-                        width:"95%",
+                        width:"90%",
+                        display: "flex",
+                        flexDirection: "column",
                 }}> 
-                    <Carousel navButtonsAlwaysVisible={true}>
+                    <Carousel 
+                    navButtonsAlwaysVisible={true}
+                    navButtonsProps={{          // Change the colors and radius of the actual buttons. THIS STYLES BOTH BUTTONS
+                        style: {
+                            backgroundColor: '#22323f',
+                        }
+                    }} 
+                    NextIcon={<ArrowForwardIcon fontSize='small' sx={{color: "secondary.main"}}/>}
+                    PrevIcon={<ArrowBackIcon fontSize='small' sx={{color: "secondary.main"}}/>}
+                    navButtonsWrapperProps={{   // Move the buttons to the bottom. Unsetting top here to override default style.
+                        style: {
+                            bottom: '0',
+                            top: 'unset'
+                        }
+                    }} 
+                    
+                    >
                         {
                             imageArr.map((image, i) => <div key={i}><ImageDisplay  image={image}/></div>)
                         }
@@ -799,7 +859,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                     width:"90%",
                     display: "flex",
                     flexDirection: "column",
-                    justifyContent: "space_around",
+                    justifyContent: "space-between",
                 }}
                 > 
                     <Paper elevation={0} square={true} sx={{
@@ -814,7 +874,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                         <Box
                             component="img"
                             sx={{
-                                height: "40px",
+                                height: "30px",
                                 pl: 1
                             }}
                             alt="QuickLook"
@@ -829,7 +889,10 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                                 "nutri_score_" + foodExternalSingle?.foodData?.nutriscore_grade,
                                 "nova_score_" + foodExternalSingle?.foodData?.nova_group as string
                             ])}
-                    {UserFoodPrefs(foodExternalSingle?.foodData?.allergens_tags as string[], foodExternalSingle?.foodData?.traces_tags as string[])}
+                    <Divider/>
+                    {UserFoodPrefs(foodExternalSingle?.foodHasAllergen || [])}
+                    <Divider/>
+                    {IngredientsAnalysis(foodIngredientsAnalysis)}
                 </Box>
                 
                 <Box
@@ -889,7 +952,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                         Alérgenos
                         </Typography>
                     </Paper>
-                    {Allergens(foodExternalSingle?.foodData?.allergens_tags as string[], foodExternalSingle?.foodData?.traces_tags as string[])}
+                    {Allergens(foodExternalSingle?.foodHasAllergen)}
                 </Box>
 
                 <Box
@@ -911,7 +974,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                         Aditivos
                         </Typography>
                     </Paper>
-                    {Additives(foodExternalSingle?.foodData?.additives as string[])}
+                    {Additives(foodExternalSingle?.foodHasAdditive)}
                 </Box>
 
                 <Box
@@ -981,22 +1044,21 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                 </Box>
                 
                 <Box
+                ref={commentsRef}
                 sx={{
+                    display: "flex",
                     width:"90%",
                 }}
                 > 
-                    <div ref={commentsRef}>
-                        <FoodComments expanded={expandedComments} toggleExpand={() => setExpandedComments(!expandedComments)}></FoodComments>
-                    </div>
+                    <FoodComments expanded={expandedComments} toggleExpand={() => setExpandedComments(!expandedComments)}></FoodComments>
                 </Box>
 
                 <Button variant="text" onClick={()=>navigate("history")} sx={{mb:8}}>
-                    <Typography variant='subtitle2'>
+                    <HistoryIcon/>
+                    <Typography variant='subtitle2' sx={{textDecoration: "underline"}}>
                         Ver historial de ediciones
                     </Typography>
                 </Button>
-                
-                <Backdrop open={showQuickLookInfo} onClick={handleQuickLookClose} sx={{width: "100%"}}>
                     <Dialog open={showQuickLookInfo} onClose={handleQuickLookClose} scroll='paper' 
                     sx={{width: "100%", 
                         maxWidth: "500px", 
@@ -1096,7 +1158,6 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                             </Button>
                         </DialogActions>
                     </Dialog>
-                </Backdrop>
     
                 {/* <Button variant='contained'
                     sx={{

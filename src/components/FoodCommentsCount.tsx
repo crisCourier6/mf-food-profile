@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api';
-import { Box, IconButton, Typography, CircularProgress, } from '@mui/material';
+import { Box, IconButton, Typography, CircularProgress, Tooltip, } from '@mui/material';
 import CommentRoundedIcon from '@mui/icons-material/CommentRounded';
 
 const FoodCommentsCount: React.FC<{id:string | undefined, onClick: () => void, noneColor: string, someColor:string}> = ({id, onClick, noneColor, someColor}) => {
@@ -32,6 +32,7 @@ const FoodCommentsCount: React.FC<{id:string | undefined, onClick: () => void, n
     }, []);
 
     return ( 
+        <Tooltip title={"Ver comentarios"} key="comments" placement="top" arrow={true}>
         <Box sx={{
             display: "flex",
             flexDirection: "row",
@@ -50,6 +51,7 @@ const FoodCommentsCount: React.FC<{id:string | undefined, onClick: () => void, n
                 {allDone? commentsCount:<CircularProgress size="15px" color='warning'/>}
             </Typography>
         </Box>
+        </Tooltip>
     )
 }
 

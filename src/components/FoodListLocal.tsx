@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api';
 import { FoodLocal } from '../interfaces/foodLocal';
-import { Box, } from '@mui/material';
-import { DataGrid, GridColDef, GridEventListener, GridRenderCellParams } from "@mui/x-data-grid"
+import { Box, Button, IconButton, Tooltip, } from '@mui/material';
+import { DataGrid, GridColDef, GridEventListener, GridRenderCellParams, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExport, GridToolbarFilterButton } from "@mui/x-data-grid"
 import { useNavigate } from 'react-router-dom';
+import Visibility from "@mui/icons-material/Visibility"
+import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
 import { esES } from '@mui/x-data-grid/locales';
 import FoodCommentsCount from './FoodCommentsCount';
 import FoodCommentList from './FoodCommentList';
@@ -46,7 +49,17 @@ const FoodListLocal: React.FC = () => {
                     gap: 1,
                     height: '100%',
                 }}>
-                            <FoodCommentsCount id={params.row.id} onClick={()=>handleShowComments(params.row)} noneColor='lightgrey' someColor='primary.main'/>        
+                            <Tooltip title={"Ver perfil de alimento"} key="view" placement="left" arrow={true}>
+                                <IconButton color="primary" onClick={() => handleFoodProfile(params.row.id)}>
+                                    <Visibility/>
+                                </IconButton>
+                            </Tooltip>
+                            <FoodCommentsCount id={params.row.id} onClick={()=>handleShowComments(params.row)} noneColor='lightgrey' someColor='primary.main'/>      
+                            <Tooltip title="Editar" key="edit" placement="right" arrow={true}>
+                                <IconButton color="primary" onClick={() => handleEditFood(params.row.id)}>
+                                    <EditIcon />
+                                </IconButton>
+                            </Tooltip>
                 </Box>
             )
         }
@@ -60,6 +73,18 @@ const FoodListLocal: React.FC = () => {
         return navigate("/food/" + params.row.id)
       };
 
+    const handleFoodProfile = (id: string) => {
+        return navigate("/food/" + id)
+    }
+
+    const handleCreateFood = () => {
+        return navigate("/scan")
+    }
+
+    const handleEditFood = (id:string) => {
+        return navigate(`/food/${id}/edit`)
+    }
+
     const handleShowComments = (foodLocal:FoodLocal) => {
         setSelectedFood(foodLocal)
         setShowCommentsDialog(true)
@@ -68,6 +93,28 @@ const FoodListLocal: React.FC = () => {
     const handleCloseComments = () => {
         setShowCommentsDialog(false)
     }
+
+    const CustomToolbar: React.FC = () => (
+        <GridToolbarContainer
+        sx={{
+            border: "2px solid",
+            borderColor: 'primary.dark', // Change the background color
+        }}>
+            <GridToolbarColumnsButton/>
+            <GridToolbarFilterButton/>
+            <GridToolbarDensitySelector/>
+            <GridToolbarExport />
+            <Tooltip title="Crear notificación" key="create" placement="bottom">
+                <Button
+                    onClick={handleCreateFood}
+                    sx={{fontSize: 13}}
+                >
+                    <AddIcon/>
+                    Crear
+                </Button>
+            </Tooltip>
+        </GridToolbarContainer>
+    );
 
     return ( <>
         <Box sx={{
@@ -85,6 +132,7 @@ const FoodListLocal: React.FC = () => {
                 rows={foodLocalList}
                 columns={columns}
                 rowHeight={32}
+                slots={{ toolbar: CustomToolbar }}
                 initialState={{
                     pagination: {
                         paginationModel: { page: 0, pageSize: 10 },

@@ -10,6 +10,7 @@ import { CircularProgress } from "@mui/material";
 import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
 import FoodRate from './FoodRate';
 import FoodCommentsCount from './FoodCommentsCount';
+import NavigateBack from './NavigateBack';
 
 const FoodListMini: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible }) => {
     const navigate = useNavigate()
@@ -197,13 +198,27 @@ const FoodListMini: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible 
                     boxSizing: "border-box"
                   }}
             >
-                <Typography variant='h5' width="100%"  color="primary.contrastText" sx={{py:1, borderLeft: "3px solid",
-                    borderRight: "3px solid",
-                    borderColor: "secondary.main",
-                    boxSizing: "border-box",
-                }}>
-                    Mi historial de alimentos
-                </Typography>
+                    <Box sx={{
+                        display: "flex", 
+                        width: "100%", 
+                        justifyContent: "space-between",
+                        borderLeft: "3px solid",
+                        borderRight: "3px solid",
+                        borderColor: "secondary.main",
+                        boxSizing: "border-box",
+                        color: "primary.contrastText"
+                    }}>
+                        <Box sx={{display: "flex", flex:1}}>
+                            <NavigateBack/>
+                        </Box>
+                        <Box sx={{display: "flex", flex:4}}>
+                            <Typography variant='h6' width="100%"  color="primary.contrastText" sx={{py:1, 
+                            }}>
+                                Mi historial de alimentos
+                            </Typography>
+                        </Box>
+                        <Box sx={{display: "flex", flex:1}}/>
+                </Box>
                 <ToggleButtonGroup
                     value={filter}
                     exclusive
@@ -211,9 +226,9 @@ const FoodListMini: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible 
                     aria-label="filter options"
                     sx={{ width:"100%",display:"flex",flexDirection:"row",justifyContent:"center" }}
                 >
-                    <ToggleButton value="all" sx={{flex:1, fontSize:{xs:14, md:18}, py: 0.5}}>Todos</ToggleButton>
-                    <ToggleButton value="likes" sx={{flex:1, fontSize:{xs:14, md:18}, py: 0.5 }}>Me gustan</ToggleButton>
-                    <ToggleButton value="dislikes" sx={{flex:1, fontSize:{xs:14, md:18}, py: 0.5}}>No me gustan</ToggleButton>
+                    <ToggleButton value="all" sx={{flex:1, fontSize:{xs:12, md:18}, py: 0.5}}>Todos</ToggleButton>
+                    <ToggleButton value="likes" sx={{flex:1, fontSize:{xs:12, md:18}, py: 0.5 }}>Me gustan</ToggleButton>
+                    <ToggleButton value="dislikes" sx={{flex:1, fontSize:{xs:12, md:18}, py: 0.5}}>No me gustan</ToggleButton>
                 </ToggleButtonGroup>
             </Box>
             

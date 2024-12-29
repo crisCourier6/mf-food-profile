@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Button, Paper, Typography, Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
 import "./Components.css"
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { FoodHasAdditive } from '../interfaces/foodHasAdditive';
 
-const FoodAdditive: React.FC<{additives: string[]}> = (props) => {
+const FoodAdditive: React.FC<{additives: FoodHasAdditive[]}> = (props) => {
     const textLength = 450;
     const [expanded, setExpanded] = useState<number | false>(false);
     const [isFullText, setIsFullText] = useState<Record<number, boolean>>({});
@@ -48,24 +49,33 @@ const FoodAdditive: React.FC<{additives: string[]}> = (props) => {
     };
 
     useEffect(() => {
-        const fetchData = async () => {
-            const descriptions = await Promise.all(
-                props.additives.map(async (data) => {
-                    let wikidata = data.split(",")[1];
-                    const res = await fetchDescription(wikidata);
-                    return res;
-                })
-            );
-            setAdditiveData(descriptions);
-        };
-        fetchData();
+        if (props.additives){
+            const fetchData = async () => {
+                const descriptions = await Promise.all(
+                    props.additives.map(async (data) => {
+                        let wikidata = data.additive.wikidata;
+                        if (wikidata){
+                            const res = await fetchDescription(wikidata);
+                            return res;
+                        }
+                        else{
+                            return {description : "Descripción no encontrada.", link: ""}
+                        }
+                        
+                    })
+                );
+                setAdditiveData(descriptions);
+            };
+            fetchData();
+        }
+        
     }, [props.additives]);
 
     return (
         <Paper elevation={0}>
             <>
                 {props.additives.map((data, index) => {
-                    const name = data.split(",")[0];
+                    const name = data.additive.name;
                     const { description, link } = additiveData[index] || { description: "Sin descripción", link: "" };
 
                     const isExpanded = expanded === index;
@@ -84,7 +94,7 @@ const FoodAdditive: React.FC<{additives: string[]}> = (props) => {
                                 </Typography>
                             </AccordionSummary>
                             <AccordionDetails>
-                                <Typography fontSize={12} textAlign="justify">
+                                <Typography variant='subtitle2' textAlign="justify">
                                     {fullTextVisible ? description : shrinkDescription(description, textLength)}
                                     {link && (
                                         <a href={link} target="_blank" rel="noopener noreferrer" style={{ marginLeft: '8px' }}>
