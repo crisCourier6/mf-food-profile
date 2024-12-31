@@ -38,7 +38,6 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
         "en:soybeans", "en:celery", "en:mustard", "en:lupin", "en:fish", "en:crustaceans", 
         "en:molluscs", "en:sulphur-dioxide-and-sulphites"]
     const [foods, setFoods] = useState<FoodLocal[]>([])
-    const [foodsFiltered, setFoodsFiltered] = useState<FoodLocal[]>([])
     const [selectedFood, setSelectedFood] = useState<FoodLocal | null>(null)
     const [searchQuery, setSearchQuery] = useState("");
     const [isSearching, setIsSearching] = useState(false)
@@ -112,7 +111,6 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
                     return {...food, userRatesFood: userRating}
                 })
                 setFoods(updatedData)
-                setFoodsFiltered(updatedData)
                 setResultsTotal(res.data.total)
             })
             .catch(error=>{
@@ -125,7 +123,7 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
         }
         else {
             // If no parameters, reset foods to empty or a default state
-            setFoods([]);
+            //setFoods([]);
             setIsSearching(false)
         }
             
@@ -136,7 +134,7 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
         setTimeout(() => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }, 100); // Adjust the delay as needed
-    }, [foodsFiltered])
+    }, [foods])
 
     const handleSearch = (page: number, isPrevQuery:boolean) => {
         let queryParams = new URLSearchParams(location.search);
@@ -570,7 +568,7 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
                     </DialogActions>
                 </Dialog>
             {allDone 
-                ?   foodsFiltered.length>0 
+                ?   foods.length>0 
                     ?   <Typography variant='subtitle2'>
                             {(page*limit-limit)+1}-{Math.min(page*limit, resultsTotal)} de {resultsTotal} resultados
                         </Typography>
@@ -580,7 +578,7 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
                 :   <></>
             }
             {!isSearching 
-                ? foodsFiltered.map((food, index)=>{
+                ? foods.map((food, index)=>{
                     return (
                     <Card key={index} sx={{
                     border: "4px solid", 
@@ -651,7 +649,7 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
                 : <CircularProgress/>
             }
             {
-                foodsFiltered.length>0 && resultsTotal>limit &&
+                foods.length>0 && resultsTotal>limit &&
                 <Box 
                 sx={{
                     bottom: 0,
