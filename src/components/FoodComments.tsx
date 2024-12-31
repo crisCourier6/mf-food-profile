@@ -237,7 +237,6 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
                 Authorization: "Bearer " + token
             }
         }).then(res => {
-            console.log(res);
             addNewComment(res.data) // Call the parent's new comment function
             setNewCommentContent("");  // Clear the input fields after creating
             closeCreateDialog();

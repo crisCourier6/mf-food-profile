@@ -462,7 +462,6 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                      newUserRatesFood = {userId: currentUserId, foodLocalId: response.data.id, rating: "neutral"}
                 }
                 let food = {...response.data, userRatesFood: newUserRatesFood}
-                console.log(response.data)
                 setFoodExternalSingle(food)
                 setFoodFullName(food.name)
                 document.title = `${food.foodData.product_name} - EyesFood`
