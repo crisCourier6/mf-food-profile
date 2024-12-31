@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api';
 import { useParams } from "react-router-dom"
-import { Box, Button, IconButton, Paper, Typography, Dialog, DialogTitle, DialogContent, TextField, DialogActions } from '@mui/material';
+import { Box, Button, IconButton, Paper, Typography, Dialog, DialogTitle, DialogContent, TextField, DialogActions, Snackbar, Alert, SnackbarCloseReason } from '@mui/material';
 import { UserCommentsFood } from '../interfaces/UserCommentsFood';
 import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import ReplyRoundedIcon from '@mui/icons-material/ReplyRounded';
 import AddIcon from '@mui/icons-material/Add';
+import CloseIcon from '@mui/icons-material/Close';
 import dayjs from 'dayjs';
 
 const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = ({ expanded, toggleExpand }) => {
@@ -21,6 +22,8 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
     const [showCreateDialog, setShowCreateDialog] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)
     const [showEditDialog, setShowEditDialog] = useState(false)
+    const [snackbarMsg, setSnackbarMsg] = useState("")
+    const [snackbarOpen, setSnackbarOpen] = useState(false)
     const [newCommentContent, setNewCommentContent] = useState("");
 
     useEffect(()=>{
@@ -141,6 +144,17 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
         
     };
 
+    const handleSnackbarClose = (
+        event: React.SyntheticEvent | Event,
+        reason?: SnackbarCloseReason,
+      ) => {
+        if (reason === 'clickaway') {
+          return;
+        }
+    
+        setSnackbarOpen(false);
+      }
+
     const handleUpdateComment = () => {
         if (selectedComment) {
             const updatedComment = {
@@ -156,11 +170,15 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
                     updateComment(updatedComment)
                 })
                 .catch(error => {
+                    setSnackbarMsg("Error al modificar comentario")
+                    setSnackbarOpen(true)
                     console.log(error);
                 })
                 .finally(()=>{
                     setSelectedComment(null)
                     setSelectedCommentParent(null)
+                    setSnackbarMsg("Comentario modificado!")
+                    setSnackbarOpen(true)
                 })
         }
         setShowEditDialog(false);  // Close dialog after updating
@@ -178,11 +196,15 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
                 deleteComment(selectedComment.id)
             })
             .catch(error => {
+                setSnackbarMsg("Error al eliminar comentario")
+                setSnackbarOpen(true)
                 console.log(error);
             })
             .finally(()=>{
                 setSelectedComment(null)
                 setSelectedCommentParent(null)
+                setSnackbarMsg("Comentario eliminado!")
+                setSnackbarOpen(true)
             })
         }
         setShowDeleteDialog(false);  // Close dialog after deleting
@@ -220,11 +242,15 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
             setNewCommentContent("");  // Clear the input fields after creating
             closeCreateDialog();
         }).catch(error => {
+            setSnackbarMsg("Error al crear comentario")
+            setSnackbarOpen(true)
             console.log(error);
         })
         .finally(()=>{
             setSelectedComment(null)
             setSelectedCommentParent(null)
+            setSnackbarMsg("Comentario creado!")
+            setSnackbarOpen(true)
         })
     };
     
@@ -464,7 +490,18 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
                     }
                 }} 
             >
-                <DialogTitle>Editar Comentario</DialogTitle>
+                <DialogTitle>
+                    <Box sx={{display:"flex", justifyContent: "space-between"}}>
+                        Editar comentario
+                        <IconButton
+                        color="inherit"
+                        onClick={closeEditDialog}
+                        sx={{p:0}}
+                        >
+                            <CloseIcon />
+                        </IconButton>
+                    </Box>
+                </DialogTitle>
                 <DialogContent>
                     <TextField
                         fullWidth
@@ -479,7 +516,6 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
                     
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={closeEditDialog}>Cancelar</Button>
                     <Button onClick={handleUpdateComment} variant="contained" disabled={editedContent==""}>Guardar</Button>
                 </DialogActions>
             </Dialog>
@@ -504,11 +540,21 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
                     margin: 0
                 }
             }} >
-                <DialogTitle> 
-                    {selectedComment 
-                        ? <>Respondiendo a {selectedComment.user.name}</>
-                        : <>Nuevo comentario</>}
-                    </DialogTitle>
+                 <DialogTitle>
+                    <Box sx={{display:"flex", justifyContent: "space-between"}}>
+                        {selectedComment 
+                            ? <>Respondiendo a {selectedComment.user.name}</>
+                            : <>Nuevo comentario</>
+                        }
+                        <IconButton
+                        color="inherit"
+                        onClick={closeCreateDialog}
+                        sx={{p:0}}
+                        >
+                            <CloseIcon />
+                        </IconButton>
+                    </Box>
+                </DialogTitle>
                 <DialogContent>
                     <TextField
                         label="Comentario"
@@ -523,7 +569,6 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
                     
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={closeCreateDialog}>Cancelar</Button>
                     <Button onClick={handleCreateComment} variant="contained" color="primary">
                         Guardar
                     </Button>
@@ -532,6 +577,20 @@ const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = 
             </>
         }
         </Box>
+        <Snackbar
+        open = {snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        >
+            <Alert onClose={handleSnackbarClose} 
+            severity={snackbarMsg.includes("Error")?"error":"success"} 
+            variant="filled"
+            sx={{ 
+                width: '100%'
+            }}>
+                {snackbarMsg}
+            </Alert>
+        </Snackbar>  
     </>
     )
 };

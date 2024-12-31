@@ -5,6 +5,7 @@ import nutri_score_d from "../../public/nutri_score/d.png"
 import nutri_score_e from "../../public/nutri_score/e.png"
 import nutri_score_undefined from "../../public/nutri_score/undefined.png"
 import nutri_score_unknown from "../../public/nutri_score/unknown.png"
+import nutri_score_not_applicable from "../../public/nutri_score/not-applicable.png"
 import eco_score_a from "../../public/eco_score/a.png"
 import eco_score_b from "../../public/eco_score/b.png"
 import eco_score_c from "../../public/eco_score/c.png"
@@ -29,6 +30,7 @@ const ImagesScores: {[key: string]: any} = {
     "nutri_score_e": nutri_score_e,
     "nutri_score_undefined": nutri_score_undefined,
     "nutri_score_unknown": nutri_score_unknown,
+    "nutri_score_not-applicable": nutri_score_not_applicable,
     "eco_score_a": eco_score_a,
     "eco_score_b": eco_score_b,
     "eco_score_c": eco_score_c,

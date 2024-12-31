@@ -42,24 +42,24 @@ const FoodListLocal: React.FC = () => {
             headerAlign: "center", 
             type: "actions",
             renderCell: (params: GridRenderCellParams) => (
-                <Box sx={{
+                <Box key={params.row.id} sx={{
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
                     gap: 1,
                     height: '100%',
                 }}>
-                            <Tooltip title={"Ver perfil de alimento"} key="view" placement="left" arrow={true}>
-                                <IconButton color="primary" onClick={() => handleFoodProfile(params.row.id)}>
-                                    <Visibility/>
-                                </IconButton>
-                            </Tooltip>
-                            <FoodCommentsCount id={params.row.id} onClick={()=>handleShowComments(params.row)} noneColor='lightgrey' someColor='primary.main' ref={commentCountRef}/>      
-                            <Tooltip title="Editar" key="edit" placement="right" arrow={true}>
-                                <IconButton color="primary" onClick={() => handleEditFood(params.row.id)}>
-                                    <EditIcon />
-                                </IconButton>
-                            </Tooltip>
+                    <Tooltip title={"Ver perfil de alimento"} key="view" placement="left" arrow={true}>
+                        <IconButton color="primary" onClick={() => handleFoodProfile(params.row.id)}>
+                            <Visibility/>
+                        </IconButton>
+                    </Tooltip>
+                    <FoodCommentsCount id={params.row.id} onClick={()=>handleShowComments(params.row)} noneColor='lightgrey' someColor='primary.main' ref={commentCountRef}/>      
+                    <Tooltip title="Editar" key="edit" placement="right" arrow={true}>
+                        <IconButton color="primary" onClick={() => handleEditFood(params.row.id)}>
+                            <EditIcon />
+                        </IconButton>
+                    </Tooltip>
                 </Box>
             )
         }

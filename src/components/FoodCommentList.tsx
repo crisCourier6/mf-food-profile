@@ -151,8 +151,6 @@ const FoodCommentList: React.FC<{ foodLocal:FoodLocal|null, show:boolean, hide:(
         setShowDeleteDialog(true);
     };
     const closeDeleteDialog = () => {
-        setSelectedComment(null)
-        setSelectedCommentParent(null)
         setShowDeleteDialog(false)
     }
 
@@ -163,8 +161,6 @@ const FoodCommentList: React.FC<{ foodLocal:FoodLocal|null, show:boolean, hide:(
     };
 
     const closeEditDialog = () => {
-        setSelectedComment(null)
-        setSelectedCommentParent(null)
         setShowEditDialog(false)
     }
 
