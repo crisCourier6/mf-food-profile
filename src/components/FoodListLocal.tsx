@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import api from '../api';
 import { FoodLocal } from '../interfaces/foodLocal';
 import { Box, Button, IconButton, Tooltip, } from '@mui/material';
-import { DataGrid, GridColDef, GridEventListener, GridRenderCellParams, GridToolbarColumnsButton, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarExport, GridToolbarFilterButton } from "@mui/x-data-grid"
+import { DataGrid, GridColDef, GridEventListener, GridRenderCellParams, GridToolbarContainer, GridToolbarExport, GridToolbarFilterButton } from "@mui/x-data-grid"
 import { useNavigate } from 'react-router-dom';
 import Visibility from "@mui/icons-material/Visibility"
 import AddIcon from '@mui/icons-material/Add';

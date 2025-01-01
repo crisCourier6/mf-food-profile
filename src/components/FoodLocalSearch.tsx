@@ -3,14 +3,8 @@ import api from '../api';
 import { FoodLocal } from '../interfaces/foodLocal';
 import { UserRatesFood } from '../interfaces/userRatesFood';
 import { Box, Card, CardContent, CardMedia, Grid, IconButton, Typography, Alert, Button, 
-    Dialog, DialogActions, DialogContent, InputAdornment, TextField, Snackbar, SnackbarCloseReason, 
-    InputLabel, Select, OutlinedInput, Chip, MenuItem, DialogTitle, CircularProgress, 
-    Divider, Pagination, Accordion, AccordionSummary,
-    AccordionDetails,
-    Checkbox,
-    FormGroup,
-    FormControlLabel} from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+    Dialog, DialogActions, DialogContent, InputAdornment, TextField, Snackbar, SnackbarCloseReason, DialogTitle, CircularProgress, 
+    Divider, Pagination, Checkbox, FormGroup, FormControlLabel} from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import NoPhoto from "../../public/no-photo.png"
 import FoodRate from './FoodRate';
