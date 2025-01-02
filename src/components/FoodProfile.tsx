@@ -396,6 +396,7 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
     const foodURL = "/food/external"
     const queryParams = `?wr=true&u=${currentUserId}`
     const [allDone, setAllDone] = useState(false)
+    const [error, setError] = useState(false)
     const { id } = useParams()
     const navigate = useNavigate()
 
@@ -627,8 +628,12 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
             if (error.response.status === 404){
                 return navigate("/food/" + id + "/edit?n=true")
             }
-            else if (error.response.status>=500){
+            else if (error.response.status>=405){
                 console.log("OpenFoodFacts está caído probablemente")
+                setError(true)
+            }
+            else{
+                setError(true)
             }
         })
         .finally(()=>{
@@ -714,7 +719,18 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                 alignItems="center" 
                 sx={{width: "100vw", maxWidth:"500px", gap:"10px"}}
             >   
-                {!!foodExternalSingle && foodFullName!== "" &&
+
+            {
+                error ? <Box sx={{width: "100%", display: "flex", flexDirection: "column", alignItems: "center"}}>
+                            <Typography variant='h6' sx={{pt:1}}>
+                                Ocurrió un problema
+                            </Typography>
+                            <Typography variant='subtitle1'>
+                                OpenFoodFacts no responde, prueba más tarde.
+                            </Typography>
+                        </Box>
+                : <>
+                    {!!foodExternalSingle && foodFullName!== "" &&
                 <Box 
                 ref={containerRef}
                 sx={{
@@ -1167,6 +1183,9 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                     }
                     }}>COMENTARIOS
                 </Button> */}
+                </>
+            }
+                
                 
             </Grid>
         :null
