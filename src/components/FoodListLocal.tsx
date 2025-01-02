@@ -14,7 +14,7 @@ import FoodCommentList from './FoodCommentList';
 const FoodListLocal: React.FC = () => {
     const navigate = useNavigate()
     const [foodLocalList, setFoodLocalList] = useState<FoodLocal[] | null>()
-    const token = window.sessionStorage.getItem("token") || window.localStorage.getItem("token")
+    const token = window.sessionStorage.getItem("token") ?? window.localStorage.getItem("token")
     const [showCommentsDialog, setShowCommentsDialog] = useState(false)
     const [selectedFood, setSelectedFood] = useState<FoodLocal|null>(null)
     const foodURL = "/food/local"

@@ -15,8 +15,8 @@ interface FoodRateProps {
 
 const FoodRate: React.FC<FoodRateProps> = (props) => {
     const [isUpdating, setIsUpdating] = useState(false)
-    const token = window.sessionStorage.getItem("token") || window.localStorage.getItem("token")
-    const currentUserId = window.sessionStorage.getItem("id") || window.localStorage.getItem("id")
+    const token = window.sessionStorage.getItem("token") ?? window.localStorage.getItem("token")
+    const currentUserId = window.sessionStorage.getItem("id") ?? window.localStorage.getItem("id")
     const foodRatingsURL = "/food/ratings"
 
     const handleLike = (likedFood: FoodLocal) => {

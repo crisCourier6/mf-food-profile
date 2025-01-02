@@ -17,7 +17,7 @@ export interface FoodCommentsCountRef {
 const FoodCommentsCount= forwardRef(({id, onClick, noneColor, someColor}: FoodCommentsCountProps, ref) => {
     const [commentsCount, setCommentsCount] = useState(0)
     const commentsURL = "/comments-food"
-    const token = window.sessionStorage.getItem("token") || window.localStorage.getItem("token")
+    const token = window.sessionStorage.getItem("token") ?? window.localStorage.getItem("token")
     const [allDone, setAllDone] = useState(false)
 
     const fetchCommentCount = async () => {

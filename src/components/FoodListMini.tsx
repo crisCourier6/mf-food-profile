@@ -3,10 +3,9 @@ import api from '../api';
 import { FoodLocal } from '../interfaces/foodLocal';
 import { UserRatesFood } from '../interfaces/userRatesFood';
 import { Box, Card, CardContent, CardMedia, Grid, IconButton, Typography, ToggleButtonGroup, ToggleButton, 
-    Alert, Backdrop, Button, Dialog, DialogActions, DialogContent, Snackbar, SnackbarCloseReason } from '@mui/material';
+    Alert, Backdrop, Button, Dialog, DialogActions, DialogContent, Snackbar, SnackbarCloseReason, CircularProgress  } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import NoPhoto from "../../public/no-photo.png"
-import { CircularProgress } from "@mui/material";
 import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
 import FoodRate from './FoodRate';
 import FoodCommentsCount from './FoodCommentsCount';
@@ -15,7 +14,7 @@ import NavigateBack from './NavigateBack';
 const FoodListMini: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible }) => {
     const navigate = useNavigate()
     const { id } = useParams()
-    const token = window.sessionStorage.getItem("token") || window.localStorage.getItem("token")
+    const token = window.sessionStorage.getItem("token") ?? window.localStorage.getItem("token")
     const getFoodLocalURL = "/food/local"
     const foodRatingsURL = "/food/ratings"
     const [foods, setFoods] = useState<FoodLocal[]>([])

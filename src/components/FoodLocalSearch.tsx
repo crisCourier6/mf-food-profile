@@ -21,9 +21,9 @@ import FoodCommentList from './FoodCommentList';
 const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisible }) => {
     const navigate = useNavigate()
     const location = useLocation();
-    const token = window.sessionStorage.getItem("token") || window.localStorage.getItem("token")
-    const currentUserId = window.sessionStorage.getItem("id") || window.localStorage.getItem("id")
-    const userFoodPrefs = window.sessionStorage.getItem("food-prefs") || window.localStorage.getItem("food-prefs")
+    const token = window.sessionStorage.getItem("token") ?? window.localStorage.getItem("token")
+    const currentUserId = window.sessionStorage.getItem("id") ?? window.localStorage.getItem("id")
+    const userFoodPrefs = window.sessionStorage.getItem("food-prefs") ?? window.localStorage.getItem("food-prefs")
     const [openDialog, setOpenDialog] = useState(false);
     const getFoodLocalURL = "/food/local"
     const allergensURL = "/food/allergens"
@@ -37,10 +37,9 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
     const [isSearching, setIsSearching] = useState(false)
     const [lacksAllergens, setLacksAllergens] = useState<Allergen[]>([])
     const [containsAllergens, setContainsAllergens] = useState<Allergen[]>([])
-    const [dummySearch, setDummySearch] = useState("")
     const [successOpen, setSuccessOpen] = useState(false)
     const [page, setPage] = useState(1)
-    const [limit, setLimit] = useState(10)
+    const limit = 10
     const [showCommentsDialog, setShowCommentsDialog] = useState(false)
     const [allDone, setAllDone] = useState(false)
     const [resultsTotal, setResultsTotal] = useState(0)
@@ -56,8 +55,6 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
         })
         .then(response => {
             let newAllergens:Allergen[] = []
-            let foodPrefsArray = userFoodPrefs?.split(",") || []
-
             for (let allergen of response.data){
                 if (usedAllergens.includes(allergen.id)){
                     newAllergens.push(allergen)
@@ -74,10 +71,10 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
     useEffect(()=>{
         setIsSearching(true)
         let searchParams = new URLSearchParams(location.search);
-        const search = searchParams.get('search') || "";
-        const la = searchParams.get('la') || "";
-        const ca = searchParams.get('ca') || "";
-        const oldPage = searchParams.get("page") || page;
+        const search = searchParams.get('search') ?? "";
+        const la = searchParams.get('la') ?? "";
+        const ca = searchParams.get('ca') ?? "";
+        const oldPage = searchParams.get("page") ?? page;
         setPage(Number(oldPage))
 
         setSearchQuery(search);
@@ -355,7 +352,7 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
     }
 
     function Scores(scores:string[]){
-        return (<>
+        return (
                 <Box sx={{
                     display:"flex",
                     flexDirection:"row",
@@ -363,10 +360,10 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
                     height:"100%",
                     gap:1
                 }}>
-                    {scores.map((score, index)=>{
+                    {scores.map(score=>{
                         return (
                             <Box
-                                key={index}
+                                key={score}
                                 component="img"
                                 sx={{
                                     height: "95%",
@@ -377,7 +374,6 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
                         )
                     })}
                 </Box>
-        </>
         )
     }
 
@@ -572,9 +568,9 @@ const FoodLocalSearch: React.FC<{ isAppBarVisible: boolean }> = ({ isAppBarVisib
                 :   <></>
             }
             {!isSearching 
-                ? foods.map((food, index)=>{
+                ? foods.map(food=>{
                     return (
-                    <Card key={index} sx={{
+                    <Card key={food.id} sx={{
                     border: "4px solid", 
                     borderColor: "primary.dark", 
                     bgcolor: "primary.contrastText",

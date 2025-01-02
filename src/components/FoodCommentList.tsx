@@ -12,7 +12,7 @@ import dayjs from 'dayjs';
 const FoodCommentList: React.FC<{ foodLocal:FoodLocal|null, show:boolean, hide:()=>void, onCommentDeleted: () => void, canEdit: boolean }> = ({ foodLocal, show, hide, onCommentDeleted, canEdit }) => {
     const [comments, setComments] = useState<UserCommentsFood[]>([])
     const commentsURL = "/comments-food"
-    const token = window.sessionStorage.getItem("token") || window.localStorage.getItem("token")
+    const token = window.sessionStorage.getItem("token") ?? window.localStorage.getItem("token")
     const [selectedComment, setSelectedComment] = useState<UserCommentsFood | null>(null);
     const [selectedCommentParent, setSelectedCommentParent] = useState<UserCommentsFood | null>(null);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)

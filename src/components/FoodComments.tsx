@@ -12,8 +12,8 @@ import dayjs from 'dayjs';
 
 const FoodComments: React.FC<{ expanded: boolean; toggleExpand: () => void }> = ({ expanded, toggleExpand }) => {
     const { id } = useParams()
-    const currentUserId = window.sessionStorage.getItem("id") || window.localStorage.getItem("id")
-    const token = window.sessionStorage.getItem("token") || window.localStorage.getItem("token")
+    const currentUserId = window.sessionStorage.getItem("id") ?? window.localStorage.getItem("id")
+    const token = window.sessionStorage.getItem("token") ?? window.localStorage.getItem("token")
     const [comments, setComments] = useState<UserCommentsFood[]>([])
     const commentsURL = "/comments-food"
     const [selectedComment, setSelectedComment] = useState<UserCommentsFood | null>(null);

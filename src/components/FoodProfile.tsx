@@ -127,18 +127,18 @@ function Allergens(allergens:FoodHasAllergen[] | undefined){
     return (
         <Paper elevation={0}>
             <ul style={{ paddingLeft: 10 }}>
-                {trueAllergens.map((trueAllergen, index) => {
+                {trueAllergens.map(trueAllergen=> {
                     return (
-                        <Typography key={index} variant='subtitle1' color= "primary.dark">
+                        <Typography key={trueAllergen.allergenId} variant='subtitle1' color= "primary.dark">
                             <li> Contiene {trueAllergen.allergen.name || ""}</li>
                         </Typography>
                     )
                 })}       
             </ul>
             <ul style={{ paddingLeft: 10 }}>
-                {traces.map((trace, index) => {
+                {traces.map(trace => {
                     return (
-                        <Typography key={index} variant='subtitle1' color= "primary.dark">
+                        <Typography key={trace.allergenId} variant='subtitle1' color= "primary.dark">
                             <li> Puede contener {trace.allergen.name || ""}</li>
                         </Typography>
                     )
@@ -193,7 +193,7 @@ function NutritionTable(nutritionValues:NutritionValues[]|undefined){
             </Paper>
         )
     }
-    return (<>
+    return (
 
         <TableContainer component={Paper} sx={{ marginBottom: 2, width:"100%",borderRadius:0 }}>
             <Table aria-label="user stats table">
@@ -239,13 +239,11 @@ function NutritionTable(nutritionValues:NutritionValues[]|undefined){
                 </TableBody>
             </Table>
         </TableContainer>
-
-    </>
     )
 }
 
 function Scores(scores:string[]){
-    return (<>
+    return (
             <Box sx={{
                 display:"flex",
                 flexDirection:"row",
@@ -267,7 +265,6 @@ function Scores(scores:string[]){
                     )
                 })}
             </Box>
-    </>
     )
 }
 
@@ -282,7 +279,7 @@ function UserFoodPrefs(allergens:FoodHasAllergen[]){
     if ((allergens.length===0)){
         return (<></>)
     }
-    return (<>
+    return (
             <Box sx={{
                 display:"flex",
                 flexDirection:"row",
@@ -341,12 +338,11 @@ function UserFoodPrefs(allergens:FoodHasAllergen[]){
                         )
                     }})}
             </Box>
-    </>
     )
 }
 
 function IngredientsAnalysis(ingredientsAnalysis:string[]) {
-    return (<>
+    return (
         <Box sx={{
             display:"flex",
             flexDirection:"column",
@@ -372,7 +368,6 @@ function IngredientsAnalysis(ingredientsAnalysis:string[]) {
                 }
             })}
         </Box>
-    </>
     )
 }
 
@@ -382,8 +377,8 @@ function truncateToDecimalPlaces(num:number, decimalPlaces:number) {
 }
       
 const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({ isAppBarVisible, onReady }) => {
-    const token = window.sessionStorage.getItem("token") || window.localStorage.getItem("token")
-    const currentUserId = window.sessionStorage.getItem("id") || window.localStorage.getItem("id")
+    const token = window.sessionStorage.getItem("token") ?? window.localStorage.getItem("token")
+    const currentUserId = window.sessionStorage.getItem("id") ?? window.localStorage.getItem("id")
     const [foodExternalSingle, setFoodExternalSingle] = useState<FoodLocal|null>(null)
     const [foodFullName, setFoodFullName] = useState<string>("")
     const [foodIngredientsAnalysis, setFoodIngredientsAnalysis] = useState<string[]>([])
@@ -479,12 +474,6 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                                             || food.foodData.selected_images.nutrition.display.fr
                                             || "noPhoto", alt:"Nutrición"}) 
                         : images.push({img:"noPhoto", alt:"Nutrición"})
-                    // food.foodData.selected_images.packaging?.display
-                    //     ? images.push({img: food.foodData.selected_images.packaging.display.es
-                    //         || food.foodData.selected_images.packaging.display.en 
-                    //         || food.foodData.selected_images.packaging.display.fr
-                    //         || "noPhoto", alt:"Envasado"}) 
-                    //     : images.push({img:"noPhoto", alt:"Envasado"})
                     food.foodData.selected_images.ingredients?.display
                         ? images.push({img: food.foodData.selected_images.ingredients.display.es
                             || food.foodData.selected_images.ingredients.display.en 
@@ -718,7 +707,6 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
     };
 
     return ( allDone?
-        <>
             <Grid container 
                 display="flex" 
                 flexDirection="column" 
@@ -1181,8 +1169,6 @@ const FoodProfile: React.FC<{ isAppBarVisible: boolean, onReady: ()=>void}> = ({
                 </Button> */}
                 
             </Grid>
-            
-        </>
         :null
     )
 };
